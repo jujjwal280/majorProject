@@ -1,19 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:start1/auth/signup_screen.dart';
 import 'package:start1/screens/dashboard_screen.dart';
 import 'package:start1/screens/profile_screen.dart';
 import 'package:start1/screens/transactions_screen.dart';
 import 'package:start1/ui/onboarding_screen.dart';
 import 'package:start1/ui/splash_screen.dart';
-import 'auth/login_screen.dart';
-import 'firebase_options.dart';
+import 'package:start1/auth/login_screen.dart';
+import 'package:start1/firebase_options.dart';
+import 'package:start1/ui/notification_services.dart';
+
+// Background notification handler
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print("Background Notification Received: ${message.notification?.title}");
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Firebase Messaging
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+  await NotificationService.initialize();
+
   runApp(const MyApp());
 }
 
@@ -27,7 +40,6 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      // Define named routes for navigation
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),

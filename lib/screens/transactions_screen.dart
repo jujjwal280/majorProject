@@ -17,6 +17,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   double? _amount;
   String? _description;
   DateTime? _selectedDate;
+  int _selectedYear = DateTime.now().year; // Default to current year
 
   final List<String> _categories = [
     'Groceries',
@@ -30,8 +31,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2025, 12, 31),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2030),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
@@ -39,6 +40,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       });
     }
   }
+
 
   void _addTransaction() async {
     if (_formKey.currentState!.validate()) {
@@ -87,12 +89,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
-
     final CollectionReference transactions = FirebaseFirestore.instance
         .collection('users')
         .doc(user?.uid)
@@ -101,7 +100,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Transactions",
-        style: TextStyle(color: Colors.white)
+            style: TextStyle(color: Colors.white)
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
@@ -111,201 +110,209 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ),
         backgroundColor: const Color(0xFF053F5C),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: transactions.snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return const Center(
-              child: Text('Failed to load transactions. Please try again.'),
-            );
-          }
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: transactions.snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return const Center(
+                    child: Text('Failed to load transactions. Please try again.'),
+                  );
+                }
 
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Center(
-                child: Text(
-                  'No transactions found. Add your first transaction!',
-                  style: TextStyle(
-                      fontSize: 22, color: Colors.black87, fontWeight: FontWeight.bold),
-                ),
-              ),
-            );
-          }
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Center(
+                      child: Text(
+                        'No transactions found. Add your first transaction!',
+                        style: TextStyle(
+                            fontSize: 22,
+                            color: Colors.black87,
+                            fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  );
+                }
 
-          final dataDocs = snapshot.data!.docs;
-          double totalExpenditure = 0.0;
-          final currentDate = DateTime.now();
-          final currentMonth = currentDate.month;
-          final currentYear = currentDate.year;
+                final dataDocs = snapshot.data!.docs;
+                double totalExpenditure = 0.0;
+                Map<String, Map<int, Map<String, List<Widget>>>> groupedTransactions = {};
+                Map<String, Map<int, double>> monthlyExpenditure = {};
 
-          for (var doc in dataDocs) {
-            final data = doc.data() as Map<String, dynamic>;
-            if (data['amount'] != null && data['date'] != null) {
-              final transactionDate = (data['date'] as Timestamp).toDate();
-              if (transactionDate.month == currentMonth && transactionDate.year == currentYear) {
-                totalExpenditure += (data['amount'] as num).toDouble();
-              }
-            }
-          }
+                for (var doc in dataDocs) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  if (data['amount'] == null || data['date'] == null) continue;
 
-          Map<int, String> monthNames = {
-            1: 'January',
-            2: 'February',
-            3: 'March',
-            4: 'April',
-            5: 'May',
-            6: 'June',
-            7: 'July',
-            8: 'August',
-            9: 'September',
-            10: 'October',
-            11: 'November',
-            12: 'December',
-          };
-          String currentMonthName = monthNames[currentMonth] ?? 'Unknown';
+                  DateTime date = (data['date'] as Timestamp).toDate();
+                  if (date.year != _selectedYear) continue; // Filter by year
 
-          Map<String, Map<int, Map<String, List<Widget>>>> groupedTransactions = {};
-          Map<String, Map<int, double>> monthlyExpenditure = {};
+                  String monthName = DateFormat('MMMM').format(date);
+                  int weekOfMonth = ((date.day - 1) ~/ 7) + 1;
+                  String dayKey = DateFormat('yyyy-MM-dd').format(date);
+                  Color categoryColor = categoryColors[data['category']] ?? Colors.grey;
 
-          for (var doc in dataDocs) {
-            final data = doc.data() as Map<String, dynamic>;
+                  totalExpenditure += (data['amount'] as num).toDouble();
 
-            if (data['amount'] == null || data['date'] == null || data['category'] == null) {
-              continue;
-            }
+                  if (!groupedTransactions.containsKey(monthName)) {
+                    groupedTransactions[monthName] = {};
+                    monthlyExpenditure[monthName] = {};
+                  }
+                  if (!groupedTransactions[monthName]!.containsKey(weekOfMonth)) {
+                    groupedTransactions[monthName]![weekOfMonth] = {};
+                  }
+                  if (!groupedTransactions[monthName]![weekOfMonth]!.containsKey(dayKey)) {
+                    groupedTransactions[monthName]![weekOfMonth]![dayKey] = [];
+                  }
 
-            DateTime date = (data['date'] as Timestamp).toDate();
-            String monthKey = "${date.year}-${date.month}";
-
-            String monthName = DateFormat('MMMM').format(date);
-            int weekOfMonth = ((date.day - 1) ~/ 7) + 1;
-            String fullDateKey = "${date.year}-${date.month}-${date.day}";
-            String dayKey = DateFormat('yyyy-MM-dd').format(date);
-
-            Color categoryColor = categoryColors[data['category']] ?? Colors.grey;
-
-            if (!groupedTransactions.containsKey(monthName)) {
-              groupedTransactions[monthName] = {};
-              monthlyExpenditure[monthName] = {};
-            }
-
-            if (!groupedTransactions[monthName]!.containsKey(weekOfMonth)) {
-              groupedTransactions[monthName]![weekOfMonth] = {};
-            }
-
-            if (!groupedTransactions[monthName]![weekOfMonth]!.containsKey(dayKey)) {
-              groupedTransactions[monthName]![weekOfMonth]![dayKey] = [];
-            }
-
-            groupedTransactions[monthName]![weekOfMonth]![dayKey]!.add(
-              Card(
-                color: categoryColor,
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: ListTile(
-                  leading: const Icon(Icons.shopping_cart, color: Color(0xFF053F5C)),
-                  title: Text(data['category'] ?? 'Unknown'),
-                  subtitle: Text(data['description'] ?? 'No description'),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "₹${(data['amount'] ?? 0.0).toStringAsFixed(2)}",
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
+                  groupedTransactions[monthName]![weekOfMonth]![dayKey]!.add(
+                    Card(
+                      color: categoryColor,
+                      elevation: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      child: ListTile(
+                        leading: const Icon(Icons.shopping_cart, color: Color(0xFF053F5C)),
+                        title: Text(data['category'] ?? 'Unknown'),
+                        subtitle: Text(data['description'] ?? 'No description'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              "₹${(data['amount'] ?? 0.0).toStringAsFixed(2)}",
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.black),
+                              onPressed: () async {
+                                await transactions.doc(doc.id).delete();
+                              },
+                            ),
+                          ],
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.black),
-                        onPressed: () async {
-                          await transactions.doc(doc.id).delete();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-
-            // Ensure monthlyExpenditure and weekly breakdown are properly initialized and updated
-            monthlyExpenditure.putIfAbsent(monthName, () => {});
-            monthlyExpenditure[monthName]!.putIfAbsent(weekOfMonth, () => 0.0);
-
-            // Add the expenditure for the month and week
-            monthlyExpenditure[monthName]![weekOfMonth] = (monthlyExpenditure[monthName]![weekOfMonth] ?? 0) + (data['amount'] as num).toDouble();
-          }
-
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ListView(
-              children: [
-              Card(
-              elevation: 8,
-              color: Colors.white.withOpacity(0.8),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    Text(
-                      "${currentMonthName} Month Expenditure",
-                      style: TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF053F5C),
-                      ),
                     ),
-                    const SizedBox(height: 10),
-                    // Assuming your expenditure data contains a 'date' and 'amount'
-                    Text(
-                      "₹${totalExpenditure.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red[900],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-                for (var month in groupedTransactions.keys)
-                  ExpansionTile(
-                    title: Text(
-                      '$month (₹${monthlyExpenditure[month]?.values.fold(0.0, (previousValue, element) => previousValue + element).toStringAsFixed(2) ?? '0.00'})',
-                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
+                  );
+
+                  monthlyExpenditure.putIfAbsent(monthName, () => {});
+                  monthlyExpenditure[monthName]!.putIfAbsent(weekOfMonth, () => 0.0);
+                  monthlyExpenditure[monthName]![weekOfMonth] =
+                      (monthlyExpenditure[monthName]![weekOfMonth] ?? 0) + (data['amount'] as num).toDouble();
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ListView(
                     children: [
-                      for (var week in groupedTransactions[month]!.keys.toList()..sort())
+                      // Display overall expenditure for the selected year
+                      Card(
+                        elevation: 8,
+                        color: Colors.white.withOpacity(0.8),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children: [
+                              Text(
+                                "$_selectedYear Overall Expenditure",
+                                style: const TextStyle(
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF053F5C),
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                "₹${totalExpenditure.toStringAsFixed(2)}",
+                                style: TextStyle(
+                                  fontSize: 26,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red[900],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 1.0),
+                        child: SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
+                            children: List.generate(15, (index) {
+                              int year = DateTime.now().year - index;
+                              bool isSelected = _selectedYear == year;
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _selectedYear = year;
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isSelected ? const Color(0xFF053F5C) : Colors.grey[200],
+                                    foregroundColor: isSelected ? Colors.white : Colors.black,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  ),
+                                  child: Text(
+                                    year.toString(),
+                                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Divider(thickness: 1),
+                      for (var month in groupedTransactions.keys)
                         ExpansionTile(
                           title: Text(
-                            'Week $week (₹${monthlyExpenditure[month]?[week]?.toStringAsFixed(2) ?? '0.00'})',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            '$month (₹${monthlyExpenditure[month]?.values.fold(0.0, (prev, elem) => prev + elem).toStringAsFixed(2)})',
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                           children: [
-                            for (var day in groupedTransactions[month]![week]!.keys.toList()..sort())
+                            for (var week in groupedTransactions[month]!.keys.toList()..sort())
                               ExpansionTile(
                                 title: Text(
-                                  day,
-                                  style: const TextStyle(fontSize: 16),
+                                  'Week $week (₹${monthlyExpenditure[month]?[week]?.toStringAsFixed(2) ?? '0.00'})',
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                                 ),
-                                children: groupedTransactions[month]![week]![day]!,
+                                children: [
+                                  for (var day in groupedTransactions[month]![week]!.keys.toList()..sort())
+                                    ExpansionTile(
+                                      title: Text(
+                                        day,
+                                        style: const TextStyle(fontSize: 16),
+                                      ),
+                                      children: groupedTransactions[month]![week]![day]!,
+                                    ),
+                                ],
                               ),
                           ],
                         ),
                     ],
                   ),
-              ],
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -346,7 +353,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           decoration: InputDecoration(
                             labelText: 'Category', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                             filled: true,
-                            fillColor: Color(0xFF429EBD).withOpacity(0.2),
+                            fillColor: const Color(0xFF429EBD).withOpacity(0.2),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                             ),
@@ -364,7 +371,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           decoration: InputDecoration(
                             labelText: 'Amount', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                             filled: true,
-                            fillColor: Color(0xFF429EBD).withOpacity(0.2),
+                            fillColor: const Color(0xFF429EBD).withOpacity(0.2),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                             ),
@@ -386,12 +393,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           style: const TextStyle(color: Colors.black),
                         ),
                         const SizedBox(height: 10),
-                        // Description Input
                         TextFormField(
                           decoration: InputDecoration(
                             labelText: 'Description', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                             filled: true,
-                            fillColor: Color(0xFF429EBD).withOpacity(0.2),
+                            fillColor: const Color(0xFF429EBD).withOpacity(0.2),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                             ),
@@ -451,14 +457,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   }
 }
 
-extension on Map<int, double>? {
-  toStringAsFixed(int i) {}
-}
-
 final Map<String, Color> categoryColors = {
   'Groceries': const Color(0xFFECB762),
-  'Transportation': const Color(0xFFFFE6AE),
+  'Transportation': const Color(0xFFA5CCA9),
   'Entertainment': const Color(0xFFF4BAB0),
-  'Rent': const Color(0xFF7EA59B),
+  'Rent': const Color(0xFFB2967D),
   'Dining Out': const Color(0xFFF47F7D),
 };
