@@ -24,6 +24,7 @@ dependencies:
   url_launcher: ^6.1.10
   firebase_messaging:
   flutter_local_notifications:
+  http:
 #  tflite_flutter:
 #  tflite_flutter_helper:
 

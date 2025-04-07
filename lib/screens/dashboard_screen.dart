@@ -16,6 +16,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   int _selectedIndex = 0;
   double monthExpenses = 0;
+  double predictedExpense= 0;
   String currentMonth = "";
   String nextMonth = "";
   Map<String, double> categoryExpenses = {};
@@ -34,6 +35,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _fetchExpenses();
     _fetchUserDetails();
+    _fetchPredictedExpense();
     currentMonth = _getCurrentMonth();
     nextMonth = _getNextMonth();
   }
@@ -56,6 +58,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
       } catch (e) {
         print("Error fetching user details: $e");
+      }
+    }
+  }
+
+  void _fetchPredictedExpense() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user != null) {
+      final DocumentReference predictionDoc = FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('prediction')
+          .doc('next_month');
+
+      try {
+        final DocumentSnapshot snapshot = await predictionDoc.get();
+
+        if (snapshot.exists) {
+          final data = snapshot.data() as Map<String, dynamic>;
+          final double predicted = data['predicted_expense']?.toDouble() ?? 0.0;
+
+          setState(() {
+            predictedExpense = predicted;
+          });
+        }
+      } catch (e) {
+        print('Error fetching predicted expense: $e');
       }
     }
   }
@@ -179,9 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case 1:
         return FutureInsightScreen(
           username: _username,
-          monthExpenses: monthExpenses,
-          categoryExpenses: categoryExpenses,
-          flipCardKey: _flipCardKey,
+          predictedExpense: predictedExpense,
           nextMonth: nextMonth,
         );
       case 2:
@@ -646,19 +673,16 @@ class HomeScreen extends StatelessWidget {
 
 class FutureInsightScreen extends StatelessWidget {
   final String? username;
-  final double monthExpenses;
-  final Map<String, double> categoryExpenses;
-  final GlobalKey<FlipCardState> flipCardKey;
-  final String nextMonth;
+  final double? predictedExpense; // Nullable
+  final String? nextMonth;        // Nullable
 
-  FutureInsightScreen({
+  const FutureInsightScreen({
     super.key,
     this.username,
-    required this.monthExpenses,
-    required this.categoryExpenses,
-    required this.flipCardKey,
+    required this.predictedExpense,
     required this.nextMonth,
   });
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -669,7 +693,7 @@ class FutureInsightScreen extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
             child: Text(
-              'Predicted Value !',
+              'Predicted Value!',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -677,7 +701,20 @@ class FutureInsightScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 5),
-          Card(
+
+          predictedExpense == null || nextMonth == null
+              ? const Center(
+            child: Text(
+              "Prediction unavailable.\nAdd more transactions.",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF1E5C78),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          )
+              : Card(
             elevation: 8,
             color: const Color(0xFFF5F5F5),
             child: Padding(
@@ -697,7 +734,7 @@ class FutureInsightScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    "₹${monthExpenses.toStringAsFixed(2)}",
+                    "₹${predictedExpense!.toStringAsFixed(2)}",
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
@@ -708,151 +745,6 @@ class FutureInsightScreen extends StatelessWidget {
               ),
             ),
           ),
-          categoryExpenses.isEmpty
-              ? const Center(
-            child: Text(
-              "No data available",
-              style: TextStyle(color: Color(0xFF1E5C78)),
-            ),
-          )
-              : FlipCard(
-            key: flipCardKey,
-            direction: FlipDirection.HORIZONTAL,
-            front: GestureDetector(
-              onTap: () {},
-              child: Card(
-                elevation: 4,
-                color: const Color(0xFF1E5C78),
-                margin: const EdgeInsets.all(16.0),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Stack(
-                    children: [
-                      SizedBox(
-                        height: 200,
-                        child: PieChart(
-                          PieChartData(
-                            sections: categoryExpenses.entries.map((entry) {
-                              double percentage = (entry.value / monthExpenses) * 100;
-                              return PieChartSectionData(
-                                color: categoryColors[entry.key] ?? Colors.grey,
-                                value: entry.value,
-                                title: "${percentage.toStringAsFixed(1)}%",
-                                radius: 45,
-                                titleStyle: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              );
-                            }).toList(),
-                            borderData: FlBorderData(show: false),
-                            sectionsSpace: 4,
-                          ),
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: IconButton(
-                          icon: const Icon(Icons.info_outline_rounded, color: Colors.white),
-                          onPressed: () {
-                            flipCardKey.currentState?.toggleCard();
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            back: GestureDetector(
-              onTap: () {
-                flipCardKey.currentState?.toggleCard();
-              },
-              child: Card(
-                elevation: 4,
-                color: const Color(0xFF1E5C78),
-                margin: const EdgeInsets.all(16.0),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Text(
-                          "Category-wise Expenditure",
-                          style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        Container(
-                          height: 160,
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: categoryColors.entries.map((entry) {
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 8.0),
-                                  child: Row(
-                                    children: [
-                                      Container(
-                                        width: 20,
-                                        height: 20,
-                                        color: entry.value,
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        "${entry.key}",
-                                        style: const TextStyle(color: Colors.white, fontSize: 17),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Column(
-            children: categoryExpenses.entries.map((entry) {
-              return Card(
-                color: categoryColors[entry.key] ?? Colors.grey, // Use the category color for each entry
-                elevation: 4,
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: ListTile(
-                  leading: const Icon(Icons.shopping_cart, color: Color(0xFF053F5C)),
-                  title: Text(
-                    "${entry.key}",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF053F5C),
-                    ),
-                  ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "₹${entry.value.toStringAsFixed(2)}", // Show the category amount here as well
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
-          )
         ],
       ),
     );
