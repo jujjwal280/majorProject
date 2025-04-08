@@ -738,68 +738,90 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
   Widget build(BuildContext context) {
 
     return Scaffold(
-        body: RefreshIndicator(
-          color: const Color(0xFF053F5C),
-          onRefresh: triggerPredictionAPI,
-          child: ListView(
-            padding: const EdgeInsets.all(10.0),
-            children: [
-              const SizedBox(height: 5),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 10),
-                child: Text(
-                  'Predicted Value!',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+      body: RefreshIndicator(
+        color: const Color(0xFF053F5C),
+        onRefresh: triggerPredictionAPI,
+        child: ListView(
+          padding: const EdgeInsets.all(10.0),
+          children: [
+            const SizedBox(height: 5),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 10),
+              child: Text(
+                'Predicted Value!',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              Card(
-                elevation: 8,
-                color: const Color(0xFFF5F5F5),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        height: 30,
-                        child: Text(
-                          "$nextMonth's Expenditure",
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF053F5C),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        "₹${predictedExpense?.toStringAsFixed(2)}",
-                        style: TextStyle(
-                          fontSize: 30,
+            ),
+            Card(
+              elevation: 8,
+              color: const Color(0xFFF5F5F5),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 30,
+                      child: Text(
+                        "$nextMonth's Expenditure",
+                        style: const TextStyle(
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.red[900],
+                          color: Color(0xFF053F5C),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 5),
+                    predictedExpense != null
+                        ? Text(
+                      "₹${predictedExpense!.toStringAsFixed(2)}",
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red[900],
+                      ),
+                    )
+                        : Text(
+                      "Not enough data to predict 💤",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.red[900],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-              Center(
-                child: Text(
-                  "Push down to refresh",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.red[900],
-                  ),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: Text(
+                "Push down to refresh",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red[900],
                 ),
               ),
-            ],
-          ),
-        )
+            ),
+            const SizedBox(height: 450),
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Text(
+                "📝 To get your predicted expense, make sure you’ve added transactions for at least 2 months.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
