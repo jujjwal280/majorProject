@@ -105,7 +105,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Map<String, double> tempCategoryExpenses = {};
         double total = 0;
 
-        // Get current month and year
         DateTime now = DateTime.now();
         int currentMonth = now.month;
         int currentYear = now.year;
@@ -116,10 +115,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (data['amount'] != null && data['category'] != null && data['date'] != null) {
             final category = data['category'];
             final amount = data['amount'].toDouble();
-            final Timestamp timestamp = data['date'];  // Firestore stores date as Timestamp
+            final Timestamp timestamp = data['date'];
             DateTime transactionDate = timestamp.toDate();
 
-            // Check if the transaction is in the current month and year
             if (transactionDate.month == currentMonth && transactionDate.year == currentYear) {
               total += amount;
               tempCategoryExpenses.update(category, (value) => value + amount, ifAbsent: () => amount);
