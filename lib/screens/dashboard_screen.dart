@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:start1/screens/transactions_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -477,7 +478,6 @@ class HomeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(10.0),
       child: ListView(
         children: [
-          const SizedBox(height: 5),
           if (username != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -493,7 +493,7 @@ class HomeScreen extends StatelessWidget {
             elevation: 8,
             color: const Color(0xFFF5F5F5),
             child: Padding(
-              padding: const EdgeInsets.all(10.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
                   SizedBox(
@@ -501,7 +501,7 @@ class HomeScreen extends StatelessWidget {
                     child: Text(
                       "$currentMonth Expenditure",
                       style: const TextStyle(
-                        fontSize: 21,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF053F5C),
                       ),
@@ -511,7 +511,7 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     "₹${monthExpenses.toStringAsFixed(2)}",
                     style: TextStyle(
-                      fontSize: 26,
+                      fontSize: 30,
                       fontWeight: FontWeight.bold,
                       color: Colors.red[900],
                     ),
@@ -671,10 +671,10 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class FutureInsightScreen extends StatelessWidget {
+class FutureInsightScreen extends StatefulWidget {
   final String? username;
-  final double? predictedExpense; // Nullable
-  final String? nextMonth;        // Nullable
+  final double? predictedExpense;
+  final String? nextMonth;
 
   const FutureInsightScreen({
     super.key,
@@ -684,69 +684,114 @@ class FutureInsightScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(10.0),
-      child: ListView(
-        children: [
-          const SizedBox(height: 5),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              'Predicted Value!',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(height: 5),
+  State<FutureInsightScreen> createState() => _FutureInsightScreenState();
+}
 
-          predictedExpense == null || nextMonth == null
-              ? const Center(
-            child: Text(
-              "Prediction unavailable.\nAdd more transactions.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Color(0xFF1E5C78),
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
+class _FutureInsightScreenState extends State<FutureInsightScreen> {
+  double? predictedExpense;
+  String? nextMonth;
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    predictedExpense = widget.predictedExpense;
+    nextMonth = widget.nextMonth;
+  }
+
+  Future<void> triggerPredictionAPI() async {
+    setState(() {
+      _isLoading = true;
+    });
+    final url = Uri.parse('https://ae60f539-d299-4b88-af7e-d19af12b951d-00-3b1kce09qe2qk.sisko.replit.dev/predict');
+    try {
+      final response = await http.post(url);
+
+      if (response.statusCode == 200) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .collection('prediction')
+              .doc('next_month')
+              .get();
+
+          if (doc.exists) {
+            final data = doc.data()!;
+            setState(() {
+              predictedExpense = data['predicted_expense']?.toDouble();
+            });
+          }
+        }
+      } else {
+        print("❌ Prediction API failed: ${response.body}");
+      }
+    } catch (e) {
+      print("🔥 Error calling prediction API: $e");
+    }
+
+    setState(() {
+      _isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    return Scaffold(
+        body: RefreshIndicator(
+          color: const Color(0xFF053F5C),
+          onRefresh: triggerPredictionAPI,
+          child: ListView(
+            padding: const EdgeInsets.all(10.0),
+            children: [
+              const SizedBox(height: 5),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 10),
+                child: Text(
+                  'Predicted Value!',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-            ),
-          )
-              : Card(
-            elevation: 8,
-            color: const Color(0xFFF5F5F5),
-            child: Padding(
-              padding: const EdgeInsets.all(10.0),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 30,
-                    child: Text(
-                      "$nextMonth Expenditure",
-                      style: const TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF053F5C),
+              Card(
+                elevation: 8,
+                color: const Color(0xFFF5F5F5),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 30,
+                        child: Text(
+                          "$nextMonth's Expenditure",
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF053F5C),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 5),
+                      Text(
+                        "₹${predictedExpense?.toStringAsFixed(2)}",
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red[900],
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 5),
-                  Text(
-                    "₹${predictedExpense!.toStringAsFixed(2)}",
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.red[900],
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 40),
+            ],
           ),
-        ],
-      ),
+        )
     );
   }
 }
