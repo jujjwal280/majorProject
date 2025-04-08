@@ -786,7 +786,17 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 20),
+              Center(
+                child: Text(
+                  "Push down to refresh",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red[900],
+                  ),
+                ),
+              ),
             ],
           ),
         )
