@@ -250,14 +250,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               return IconButton(
                 icon: const Icon(Icons.menu_rounded, size: 28),
                 onPressed: () {
-                  Scaffold.of(context).openDrawer(); // Open the drawer
+                  Scaffold.of(context).openDrawer();
                 },
               );
             },
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.logout, size: 28), // Logout icon
+              icon: const Icon(Icons.logout, size: 28),
               onPressed: () {
                 showDialog(
                   context: context,
@@ -271,7 +271,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                     actions: [
-                      // Cancel button
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: const Text(
@@ -314,25 +313,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         drawer: Drawer(
           child: ListView(
-            padding: EdgeInsets.zero,  // Removes default padding
+            padding: EdgeInsets.zero,
             children: [
               // Custom header
               const SizedBox(height: 25),
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
                 decoration: const BoxDecoration(
-                  color: Color(0xFF1E5C78),  // Gradient from dark blue to light blue
+                  color: Color(0xFF1E5C78),
                 ),
-                child: IntrinsicHeight(  // Adjusts height according to content
+                child: IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       const CircleAvatar(
-                        radius: 20,  // Larger avatar size
+                        radius: 20,
                         backgroundColor: Colors.white,
                         child: Icon(Icons.account_circle, size: 40, color: Color(0xFF053F5C)),
                       ),
-                      const SizedBox(width: 15),  // Space between avatar and text
+                      const SizedBox(width: 15),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -428,21 +427,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.dashboard_rounded,
-                color: _selectedIndex == 0 ? const Color(0xFFF27F0C) : Colors.white,  // Change color based on selection
+                color: _selectedIndex == 0 ? const Color(0xFFF27F0C) : Colors.white,
               ),
               label: 'Home',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.bar_chart_rounded,
-                color: _selectedIndex == 1 ? const Color(0xFFF27F0C) : Colors.white,  // Change color based on selection
+                color: _selectedIndex == 1 ? const Color(0xFFF27F0C) : Colors.white,
               ),
               label: 'Future Insights',
             ),
             BottomNavigationBarItem(
               icon: Icon(
                 Icons.notifications_none_outlined,
-                color: _selectedIndex == 2 ? const Color(0xFFF27F0C) : Colors.white,  // Change color based on selection
+                color: _selectedIndex == 2 ? const Color(0xFFF27F0C) : Colors.white,
               ),
               label: 'Notifications',
             ),

@@ -41,7 +41,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     }
   }
 
-
   void _addTransaction() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();

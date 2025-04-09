@@ -51,7 +51,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchUserProfile();
   }
 
-  // Fetch user profile details from Firestore
   void _fetchUserProfile() async {
     final User? user = FirebaseAuth.instance.currentUser;
 
@@ -106,7 +105,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   }
 
-  // Update user profile in Firestore
   void _updateUserProfile() async {
     final User? user = FirebaseAuth.instance.currentUser;
 
@@ -138,7 +136,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pushReplacementNamed(context, '/dashboard');
   }
 
-  // Open DatePicker dialog
   Future<void> _selectDate(BuildContext context) async {
     DateTime currentDate = DateTime.now();
     DateTime initialDate = DateTime.now();
@@ -163,7 +160,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(title: const Text("Profile", style: TextStyle(color: Colors.white)),
         leading: IconButton(icon: const Icon(Icons.arrow_back),
           onPressed: () {
@@ -187,7 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 controller: _usernameController,
                 decoration: InputDecoration(
                   labelText: 'Username', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
-                  filled: true,fillColor: Color(0xFF429EBD).withOpacity(0.2),
+                  filled: true,fillColor: const Color(0xFF429EBD).withOpacity(0.2),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
                     borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
@@ -203,7 +199,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Email', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -218,7 +214,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Phone Number', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -235,7 +231,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Date of Birth (DD/MM/YYYY)', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -261,7 +257,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Gender',
                   filled: true,
-                  fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -276,7 +272,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Age', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -291,7 +287,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Address', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -317,7 +313,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Bank Name', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -332,7 +328,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Account Number', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),

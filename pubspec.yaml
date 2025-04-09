@@ -25,6 +25,7 @@ dependencies:
   firebase_messaging:
   flutter_local_notifications:
   http:
+  provider:
 #  tflite_flutter:
 #  tflite_flutter_helper:
 
