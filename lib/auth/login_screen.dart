@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         hintText: 'Enter Your Email',
                         hintStyle: const TextStyle(color: Color(0xFF053F5C)),
-                        filled: true,fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                        filled: true,fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
@@ -137,7 +137,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         hintText: 'Enter Your Password',
                         hintStyle: const TextStyle(color: Color(0xFF053F5C)),
-                        filled: true,fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+                        filled: true,fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),

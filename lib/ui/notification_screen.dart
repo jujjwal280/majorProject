@@ -7,7 +7,7 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  List<Map<String, String>> _notifications = [];
+  final List<Map<String, String>> _notifications = [];
 
   @override
   void initState() {
@@ -26,9 +26,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Notifications")),
+      appBar: AppBar(title: const Text("Notifications")),
       body: _notifications.isEmpty
-          ? Center(child: Text("No Notifications Yet"))
+          ? const Center(child: Text("No Notifications Yet"))
           : ListView.builder(
         itemCount: _notifications.length,
         itemBuilder: (context, index) {

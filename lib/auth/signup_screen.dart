@@ -31,12 +31,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final encrypt.Key key = encrypt.Key.fromUtf8('my32lengthsupersecretnooneknows!');
   final encrypt.IV iv = encrypt.IV.fromLength(16);
 
-  String _encryptPassword(String password) {
-    final encrypter = encrypt.Encrypter(encrypt.AES(key));
-    final encrypted = encrypter.encrypt(password, iv: iv);
-    return encrypted.base64;
-  }
-
   Future<void> signup() async {
     final String email = emailController.text.trim();
     final String password = passwordController.text.trim();
@@ -234,7 +228,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        backgroundColor: Color(0xFF053F5C),
+                        backgroundColor: const Color(0xFF053F5C),
                       ),
                       child: const Text(
                         '   Sign Up   ', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
@@ -267,7 +261,7 @@ class _SignupScreenState extends State<SignupScreen> {
   InputDecoration _buildInputDecoration(String hintText, IconData icon) {
     return InputDecoration(
       hintText: hintText, hintStyle: const TextStyle(color: Color(0xFF053F5C),),
-      filled: true,fillColor: Color(0xFF9FE7F5).withOpacity(0.2),
+      filled: true,fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
       ),
