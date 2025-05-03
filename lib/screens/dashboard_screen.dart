@@ -3,9 +3,11 @@ import 'package:flip_card/flip_card.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:start1/screens/transactions_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -24,6 +26,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? _username;
   String? _account_number;
   String? _bank_name;
+  bool isDashboard = false;
   bool isProfile = false;
   bool isTransaction = false;
   bool isLogout = false;
@@ -172,6 +175,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  void _dashboard() async {
+    setState(() {
+      isDashboard = true;
+    });
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.pushReplacementNamed(context, '/dashboard');
+    setState(() {
+      isTransaction = false;
+    });
+  }
+
   void _transactions() async {
     setState(() {
       isTransaction = true;
@@ -257,7 +271,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.logout, size: 28),
+              icon: Icon(
+                Icons.logout,
+                size: 28,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
               onPressed: () {
                 showDialog(
                   context: context,
@@ -306,7 +324,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               },
             ),
             IconButton(
-              icon: Icon(isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+              icon: Icon(
+                isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
               onPressed: _toggleDarkMode,
             ),
           ],
@@ -365,6 +386,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
+              ),
+              const Divider(thickness: 1),
+              ListTile(
+                leading: const Icon(Icons.dashboard_rounded),
+                title: Row(
+                  children: [
+                    const Text(
+                      'Dashboard',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    if (isDashboard) // Check if loading is true
+                      const Padding(
+                        padding: EdgeInsets.only(left: 10),
+                        child: CircularProgressIndicator(color: Color(0xFF053F5C)),
+                      ),
+                  ],
+                ),
+                onTap: _dashboard,
               ),
               const Divider(thickness: 1),
               ListTile(
@@ -452,14 +491,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 }
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final String? username;
   final double monthExpenses;
   final Map<String, double> categoryExpenses;
   final GlobalKey<FlipCardState> flipCardKey;
   final String currentMonth;
 
-  HomeScreen({
+  const HomeScreen({
     super.key,
     this.username,
     required this.monthExpenses,
@@ -468,6 +507,12 @@ class HomeScreen extends StatelessWidget {
     required this.currentMonth,
   });
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int? touchedIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -475,11 +520,11 @@ class HomeScreen extends StatelessWidget {
       padding: const EdgeInsets.all(10.0),
       child: ListView(
         children: [
-          if (username != null)
+          if (widget.username != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Text(
-                'Hey, $username!',
+                'Hey, ${widget.username}!',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -496,7 +541,7 @@ class HomeScreen extends StatelessWidget {
                   SizedBox(
                     height: 30,
                     child: Text(
-                      "$currentMonth Expenditure",
+                      "${widget.currentMonth} Expenditure",
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -506,7 +551,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    "₹${monthExpenses.toStringAsFixed(2)}",
+                    "₹${widget.monthExpenses.toStringAsFixed(2)}",
                     style: TextStyle(
                       fontSize: 30,
                       fontWeight: FontWeight.bold,
@@ -517,15 +562,18 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
-          categoryExpenses.isEmpty
-              ? const Center(
-            child: Text(
-              "No data available",
-              style: TextStyle(color: Color(0xFF1E5C78)),
+          widget.categoryExpenses.isEmpty
+              ? const Padding(
+            padding: EdgeInsets.all(20),
+            child: Center(
+              child: Text(
+                "No data available",
+                style: TextStyle(color: Color(0xFF1E5C78), fontSize: 16),
+              ),
             ),
           )
               : FlipCard(
-            key: flipCardKey,
+            key: widget.flipCardKey,
             direction: FlipDirection.HORIZONTAL,
             front: GestureDetector(
               onTap: () {},
@@ -541,13 +589,17 @@ class HomeScreen extends StatelessWidget {
                         height: 200,
                         child: PieChart(
                           PieChartData(
-                            sections: categoryExpenses.entries.map((entry) {
-                              double percentage = (entry.value / monthExpenses) * 100;
+                            sections: widget.categoryExpenses.entries.toList().asMap().entries.map((entry) {
+                              int index = entry.key;
+                              final mapEntry = entry.value;
+                              double percentage = (mapEntry.value / widget.monthExpenses) * 100;
+                              bool isTouched = index == touchedIndex;
+
                               return PieChartSectionData(
-                                color: categoryColors[entry.key] ?? Colors.grey,
-                                value: entry.value,
+                                color: categoryColors[mapEntry.key] ?? Colors.grey,
+                                value: mapEntry.value,
                                 title: "${percentage.toStringAsFixed(1)}%",
-                                radius: 45,
+                                radius: isTouched ? 55 : 45,
                                 titleStyle: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
@@ -557,6 +609,17 @@ class HomeScreen extends StatelessWidget {
                             }).toList(),
                             borderData: FlBorderData(show: false),
                             sectionsSpace: 4,
+                            pieTouchData: PieTouchData(
+                              touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                                setState(() {
+                                  if (!event.isInterestedForInteractions || pieTouchResponse?.touchedSection == null) {
+                                    touchedIndex = null;
+                                  } else {
+                                    touchedIndex = pieTouchResponse!.touchedSection!.touchedSectionIndex;
+                                  }
+                                });
+                              },
+                            ),
                           ),
                         ),
                       ),
@@ -566,7 +629,7 @@ class HomeScreen extends StatelessWidget {
                         child: IconButton(
                           icon: const Icon(Icons.info_outline_rounded, color: Colors.white),
                           onPressed: () {
-                            flipCardKey.currentState?.toggleCard();
+                            widget.flipCardKey.currentState?.toggleCard();
                           },
                         ),
                       ),
@@ -577,7 +640,7 @@ class HomeScreen extends StatelessWidget {
             ),
             back: GestureDetector(
               onTap: () {
-                flipCardKey.currentState?.toggleCard();
+                widget.flipCardKey.currentState?.toggleCard();
               },
               child: Card(
                 elevation: 4,
@@ -588,14 +651,13 @@ class HomeScreen extends StatelessWidget {
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const Text(
                           "Category-wise Expenditure",
                           style: TextStyle(fontSize: 22, color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
-                        Container(
+                        SizedBox(
                           height: 160,
                           child: SingleChildScrollView(
                             child: Column(
@@ -612,7 +674,7 @@ class HomeScreen extends StatelessWidget {
                                       ),
                                       const SizedBox(width: 10),
                                       Text(
-                                        "${entry.key}",
+                                        entry.key,
                                         style: const TextStyle(color: Colors.white, fontSize: 17),
                                       ),
                                     ],
@@ -629,34 +691,30 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
           ),
+          const SizedBox(height: 10),
           Column(
-            children: categoryExpenses.entries.map((entry) {
+            children: widget.categoryExpenses.entries.map((entry) {
               return Card(
-                color: categoryColors[entry.key] ?? Colors.grey, // Use the category color for each entry
+                color: categoryColors[entry.key] ?? Colors.grey,
                 elevation: 4,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
                   leading: const Icon(Icons.shopping_cart, color: Color(0xFF053F5C)),
                   title: Text(
-                    "${entry.key}",
+                    entry.key,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF053F5C),
                     ),
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "₹${entry.value.toStringAsFixed(2)}", // Show the category amount here as well
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
+                  trailing: Text(
+                    "₹${entry.value.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
               );
@@ -694,32 +752,66 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
     super.initState();
     predictedExpense = widget.predictedExpense;
     nextMonth = widget.nextMonth;
+    loadPredictedExpense();  // Load locally saved data
+  }
+
+  Future<void> loadPredictedExpense() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    double? storedExpense = prefs.getDouble('predictedExpense');
+    if (storedExpense != null) {
+      setState(() {
+        predictedExpense = storedExpense;
+      });
+    }
   }
 
   Future<void> triggerPredictionAPI() async {
     setState(() {
       _isLoading = true;
     });
-    final url = Uri.parse('https://ae60f539-d299-4b88-af7e-d19af12b951d-00-3b1kce09qe2qk.sisko.replit.dev/predict');
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print("❌ No user logged in.");
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final url = Uri.parse(
+      'https://ae60f539-d299-4b88-af7e-d19af12b951d-00-3b1kce09qe2qk.sisko.replit.dev/predict',
+    );
+
     try {
-      final response = await http.post(url);
+      final response = await http.post(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'uid': user.uid}), // ✅ Send UID in body
+      );
 
       if (response.statusCode == 200) {
-        final user = FirebaseAuth.instance.currentUser;
-        if (user != null) {
-          final doc = await FirebaseFirestore.instance
-              .collection('users')
-              .doc(user.uid)
-              .collection('prediction')
-              .doc('next_month')
-              .get();
+        final doc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('prediction')
+            .doc('next_month')
+            .get();
 
-          if (doc.exists) {
-            final data = doc.data()!;
-            setState(() {
-              predictedExpense = data['predicted_expense']?.toDouble();
-            });
-          }
+        if (doc.exists) {
+          final data = doc.data()!;
+          final newPredictedExpense = data['predicted_expense']?.toDouble();
+
+          // Update state with the new predicted expense
+          setState(() {
+            predictedExpense = newPredictedExpense;
+          });
+
+          // Save the updated expense value to SharedPreferences
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setDouble('predictedExpense', predictedExpense ?? 0.0);
         }
       } else {
         print("❌ Prediction API failed: ${response.body}");
@@ -735,7 +827,6 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       body: RefreshIndicator(
         color: const Color(0xFF053F5C),
@@ -914,3 +1005,24 @@ class NotificationScreen extends StatelessWidget {
     );
   }
 }
+
+// Container(
+// color: isDashboard ? Color(0xFFF27F0C) : Colors.white,
+// child: ListTile(
+// leading: const Icon(Icons.dashboard_rounded),
+// title: Row(
+// children: [
+// const Text(
+// 'Dashboard',
+// style: TextStyle(fontWeight: FontWeight.bold),
+// ),
+// if (isDashboard)
+// const Padding(
+// padding: EdgeInsets.only(left: 10),
+// child: CircularProgressIndicator(color: Color(0xFF053F5C)),
+// ),
+// ],
+// ),
+// onTap: _dashboard,
+// ),
+// ),

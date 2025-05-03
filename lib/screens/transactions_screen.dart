@@ -17,7 +17,41 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   double? _amount;
   String? _description;
   DateTime? _selectedDate;
-  int _selectedYear = DateTime.now().year; // Default to current year
+  int _selectedYear = DateTime.now().year;
+  bool isDashboard = false;
+  bool isProfile = false;
+  bool isTransaction = false;
+  String? _username;
+  String? _accountNumber;
+  String? _bankName;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserDetails();
+  }
+
+  void _fetchUserDetails() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists) {
+          setState(() {
+            _username = userDoc['username'] ?? 'User Name';
+            _accountNumber = userDoc['account_number'] ?? 'Account Number';
+            _bankName = userDoc['bank_name'] ?? 'Bank Name';
+          });
+        }
+      } catch (e) {
+        print("Error fetching user details: $e");
+      }
+    }
+  }
 
   final List<String> _categories = [
     'Groceries',
@@ -88,6 +122,39 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     }
   }
 
+  void _dashboard() async {
+    setState(() {
+      isDashboard = true;
+    });
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.pushReplacementNamed(context, '/dashboard');
+    setState(() {
+      isTransaction = false;
+    });
+  }
+
+  void _transactions() async {
+    setState(() {
+      isTransaction = true;
+    });
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.pushReplacementNamed(context, '/transactions');
+    setState(() {
+      isTransaction = false;
+    });
+  }
+
+  void _profile() async {
+    setState(() {
+      isProfile = true;
+    });
+    await Future.delayed(const Duration(seconds: 1));
+    Navigator.pushReplacementNamed(context, '/profile');
+    setState(() {
+      isProfile = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     User? user = FirebaseAuth.instance.currentUser;
@@ -101,13 +168,130 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         title: const Text("Transactions",
             style: TextStyle(color: Colors.white)
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const DashboardScreen()),);
+        leading: Builder(
+          builder: (context) {
+            return IconButton(
+              icon: const Icon(Icons.menu_rounded, size: 28),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            );
           },
         ),
         backgroundColor: const Color(0xFF053F5C),
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            // Custom header
+            const SizedBox(height: 25),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+              decoration: const BoxDecoration(
+                color: Color(0xFF1E5C78),
+              ),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.white,
+                      child: Icon(Icons.account_circle, size: 40, color: Color(0xFF053F5C)),
+                    ),
+                    const SizedBox(width: 15),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _username ?? 'User Name',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            _accountNumber ?? 'Phone Number',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                            ),
+                          ),
+                          Text(
+                            _bankName ?? 'Phone Number',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Divider(thickness: 1),
+            ListTile(
+              leading: const Icon(Icons.dashboard_rounded),
+              title: Row(
+                children: [
+                  const Text(
+                    'Dashboard',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  if (isDashboard)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: CircularProgressIndicator(color: Color(0xFF053F5C)),
+                    ),
+                ],
+              ),
+              onTap: _dashboard,
+            ),
+            const Divider(thickness: 1),
+            ListTile(
+              leading: const Icon(Icons.payment),
+              title: Row(
+                children: [
+                  const Text(
+                    'Transactions',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  if (isTransaction) // Check if loading is true
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: CircularProgressIndicator(color: Color(0xFF053F5C)),
+                    ),
+                ],
+              ),
+              onTap: _transactions,
+            ),
+            const Divider(thickness: 1,),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: Row(
+                children: [
+                  const Text(
+                    'Profile',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  if (isProfile) // Check if loading is true
+                    const Padding(
+                      padding: EdgeInsets.only(left: 10),
+                      child: CircularProgressIndicator(color: Color(0xFF053F5C)),
+                    ),
+                ],
+              ),
+              onTap: _profile,
+            ),
+            const Divider(thickness: 1),
+          ],
+        ),
       ),
       body: Column(
         children: [
