@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:start1/screens/dashboard_screen.dart';
 
 class TransactionsScreen extends StatefulWidget {
   const TransactionsScreen({super.key});
@@ -48,7 +48,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           });
         }
       } catch (e) {
-        print("Error fetching user details: $e");
+        if (kDebugMode) {
+          print("Error fetching user details: $e");
+        }
       }
     }
   }
@@ -400,7 +402,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       // Display overall expenditure for the selected year
                       Card(
                         elevation: 8,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withAlpha((0.8 * 255).toInt()),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
@@ -536,7 +538,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           decoration: InputDecoration(
                             labelText: 'Category', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                             filled: true,
-                            fillColor: const Color(0xFF429EBD).withOpacity(0.2),
+                            fillColor: const Color(0xFF429EBD).withAlpha((0.8 * 255).toInt()),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                             ),
@@ -554,7 +556,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           decoration: InputDecoration(
                             labelText: 'Amount', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                             filled: true,
-                            fillColor: const Color(0xFF429EBD).withOpacity(0.2),
+                            fillColor: const Color(0xFF429EBD).withAlpha((0.8 * 255).toInt()),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                             ),
@@ -580,7 +582,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           decoration: InputDecoration(
                             labelText: 'Description', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                             filled: true,
-                            fillColor: const Color(0xFF429EBD).withOpacity(0.2),
+                            fillColor: const Color(0xFF429EBD).withAlpha((0.8 * 255).toInt()),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                             ),

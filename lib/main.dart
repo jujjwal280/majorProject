@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -11,10 +12,11 @@ import 'package:start1/auth/login_screen.dart';
 import 'package:start1/firebase_options.dart';
 import 'package:start1/ui/notification_services.dart';
 
-// Background notification handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  print("Background Notification Received: ${message.notification?.title}");
+  if (kDebugMode) {
+    print("Background Notification Received: ${message.notification?.title}");
+  }
 }
 
 void main() async {

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:start1/screens/dashboard_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -40,10 +40,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     'Bank of Baroda',
     'HDFC Bank',
     'ICICI Bank',
-    'IDBI Bank',
     'Indusland Bank',
     'Kotak Mahindra Bank',
     'Punjab National Bank',
+    'Punjab Sindh Bank'
     'State Bank of India',
     'Union Bank of India'
   ];
@@ -59,7 +59,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     if (user != null) {
       // Safely access the user.uid
-      print("User UID: ${user.uid}");
+      if (kDebugMode) {
+        print("User UID: ${user.uid}");
+      }
 
       try {
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
@@ -91,16 +93,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _selectedBank = _bankName;
           });
         } else {
-          print("User document does not exist");
+          if (kDebugMode) {
+            print("User document does not exist");
+          }
         }
       } catch (e) {
-        print("Error fetching user profile: $e");
+        if (kDebugMode) {
+          print("Error fetching user profile: $e");
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Failed to load profile data")),
         );
       }
     } else {
-      print("No user is signed in.");
+      if (kDebugMode) {
+        print("No user is signed in.");
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No user is signed in")),
       );
@@ -130,7 +138,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SnackBar(content: Text("Profile updated successfully")),
         );
       } catch (e) {
-        print("Error updating user profile: $e");
+        if (kDebugMode) {
+          print("Error updating user profile: $e");
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Failed to update profile")),
         );
@@ -323,7 +333,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-      body: SingleChildScrollView( // Add scrolling
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
           child: Column(
@@ -333,12 +343,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text('Update your Profile $_username', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
               ],
-              // TextFields to edit details
               TextField(
                 controller: _usernameController,
                 decoration: InputDecoration(
                   labelText: 'Username', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
-                  filled: true,fillColor: const Color(0xFF429EBD).withOpacity(0.2),
+                  filled: true,fillColor: const Color(0xFF429EBD).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
                     borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
@@ -354,7 +363,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Email', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -369,7 +378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Phone Number', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -386,7 +395,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Date of Birth (DD/MM/YYYY)', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -412,7 +421,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Gender',
                   filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -427,7 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Age', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -442,7 +451,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Address', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -468,7 +477,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Bank Name', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),
@@ -483,7 +492,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: InputDecoration(
                   labelText: 'Account Number', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
                   filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withOpacity(0.2),
+                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                   ),

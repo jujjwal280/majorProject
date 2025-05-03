@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -24,8 +25,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String nextMonth = "";
   Map<String, double> categoryExpenses = {};
   String? _username;
-  String? _account_number;
-  String? _bank_name;
+  String? _accountNumber;
+  String? _bankName;
   bool isDashboard = false;
   bool isProfile = false;
   bool isTransaction = false;
@@ -56,12 +57,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (userDoc.exists) {
           setState(() {
             _username = userDoc['username'] ?? 'User Name';
-            _account_number = userDoc['account_number'] ?? 'Account Number';
-            _bank_name = userDoc['bank_name'] ?? 'Bank Name';
+            _accountNumber = userDoc['account_number'] ?? 'Account Number';
+            _bankName = userDoc['bank_name'] ?? 'Bank Name';
           });
         }
       } catch (e) {
-        print("Error fetching user details: $e");
+        if (kDebugMode) {
+          print("Error fetching user details: $e");
+        }
       }
     }
   }
@@ -88,7 +91,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           });
         }
       } catch (e) {
-        print('Error fetching predicted expense: $e');
+        if (kDebugMode) {
+          print('Error fetching predicted expense: $e');
+        }
       }
     }
   }
@@ -134,7 +139,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           currentMonth = _getCurrentMonth() as int;
         });
       } catch (e) {
-        print("Error fetching expenses: $e");
+        if (kDebugMode) {
+          print("Error fetching expenses: $e");
+        }
       }
     }
   }
@@ -262,7 +269,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           leading: Builder(
             builder: (context) {
               return IconButton(
-                icon: const Icon(Icons.menu_rounded, size: 28),
+                icon: const Icon(Icons.menu_rounded, size: 28, color: Colors.black,),
                 onPressed: () {
                   Scaffold.of(context).openDrawer();
                 },
@@ -367,14 +374,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              _account_number ?? 'Phone Number',
+                              _accountNumber ?? 'Phone Number',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.white70,
                               ),
                             ),
                             Text(
-                              _bank_name ?? 'Phone Number',
+                              _bankName ?? 'Phone Number',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.white70,
@@ -396,7 +403,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       'Dashboard',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    if (isDashboard) // Check if loading is true
+                    if (isDashboard)
                       const Padding(
                         padding: EdgeInsets.only(left: 10),
                         child: CircularProgressIndicator(color: Color(0xFF053F5C)),
@@ -414,7 +421,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       'Transactions',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    if (isTransaction) // Check if loading is true
+                    if (isTransaction)
                       const Padding(
                         padding: EdgeInsets.only(left: 10),
                         child: CircularProgressIndicator(color: Color(0xFF053F5C)),
@@ -432,7 +439,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       'Profile',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    if (isProfile) // Check if loading is true
+                    if (isProfile)
                       const Padding(
                         padding: EdgeInsets.only(left: 10),
                         child: CircularProgressIndicator(color: Color(0xFF053F5C)),
@@ -752,7 +759,7 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
     super.initState();
     predictedExpense = widget.predictedExpense;
     nextMonth = widget.nextMonth;
-    loadPredictedExpense();  // Load locally saved data
+    loadPredictedExpense();
   }
 
   Future<void> loadPredictedExpense() async {
@@ -772,7 +779,9 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      print("❌ No user logged in.");
+      if (kDebugMode) {
+        print("❌ No user logged in.");
+      }
       setState(() {
         _isLoading = false;
       });
@@ -814,10 +823,14 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
           prefs.setDouble('predictedExpense', predictedExpense ?? 0.0);
         }
       } else {
-        print("❌ Prediction API failed: ${response.body}");
+        if (kDebugMode) {
+          print("❌ Prediction API failed: ${response.body}");
+        }
       }
     } catch (e) {
-      print("🔥 Error calling prediction API: $e");
+      if (kDebugMode) {
+        print("🔥 Error calling prediction API: $e");
+      }
     }
 
     setState(() {
@@ -928,9 +941,11 @@ class NotificationScreen extends StatelessWidget {
     },
   ];
 
+  NotificationScreen({super.key});
+
   void _launchURL(BuildContext context, String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+    if (await canLaunchUrl(url as Uri)) {
+      launchUrl;
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
