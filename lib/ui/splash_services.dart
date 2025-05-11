@@ -15,7 +15,7 @@ class SplashServices {
     if (loggedIn) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen(toggleDarkMode: () {  }, isDarkMode: false,)),
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
     } else {
       Navigator.pushReplacement(
