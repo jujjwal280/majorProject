@@ -32,26 +32,40 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isDarkMode = false;
+
+  void toggleDarkMode() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
       initialRoute: '/',
       routes: {
-        '/': (context) => const SplashScreen(),
-        '/onboard': (context) => const OnboardingScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignupScreen(),
-        '/dashboard': (context) => const HomeScreen(),
-        '/transactions': (context) => const TransactionsScreen(),
-        '/profile': (context) => const ProfileScreen(),
+        '/': (context) => SplashScreen(),
+        '/onboard': (context) => OnboardingScreen(),
+        '/login': (context) => LoginScreen(),
+        '/signup': (context) => SignupScreen(),
+        '/dashboard': (context) => HomeScreen(toggleDarkMode: toggleDarkMode, isDarkMode: isDarkMode),
+        '/transactions': (context) => TransactionsScreen(toggleDarkMode: toggleDarkMode, isDarkMode: isDarkMode),
+        '/profile': (context) => ProfileScreen(toggleDarkMode: toggleDarkMode, isDarkMode: isDarkMode),
       },
     );
   }
 }
+
