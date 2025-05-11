@@ -12,7 +12,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required void Function() toggleDarkMode, required bool isDarkMode});
+  const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -210,9 +210,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         return NotificationScreen();
       case 3:
-        return TransactionsScreen(toggleDarkMode: () {  }, isDarkMode: false,);
+        return const TransactionsScreen();
       case 4:
-        return ProfileScreen(toggleDarkMode: () {  }, isDarkMode: false,);
+        return const ProfileScreen();
       default:
         return DashboardScreen(
           username: _username,

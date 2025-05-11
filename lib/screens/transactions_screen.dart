@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({super.key, required void Function() toggleDarkMode, required bool isDarkMode});
+  const TransactionsScreen({super.key});
 
   @override
   _TransactionsScreenState createState() => _TransactionsScreenState();
