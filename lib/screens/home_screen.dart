@@ -5,19 +5,20 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:start1/screens/profile_screen.dart';
 import 'package:start1/screens/transactions_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  _DashboardScreenState createState() => _DashboardScreenState();
+  _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   double monthExpenses = 0;
   double predictedExpense= 0;
@@ -33,6 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool isLogout = false;
   bool isDarkMode = false;
   final GlobalKey<FlipCardState> _flipCardKey = GlobalKey<FlipCardState>();
+
 
   @override
 
@@ -164,7 +166,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return months[month - 1];
   }
 
-  void _onItemTapped(int index) {
+  void _onBottomTap(int index) {
     setState(() {
       _selectedIndex = index;
     });
@@ -182,43 +184,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  void _dashboard() async {
+  void _onDrawerTap(int index) {
     setState(() {
-      isDashboard = true;
+      _selectedIndex = index;
     });
-    await Future.delayed(const Duration(seconds: 1));
-    Navigator.pushReplacementNamed(context, '/dashboard');
-    setState(() {
-      isTransaction = false;
-    });
-  }
-
-  void _transactions() async {
-    setState(() {
-      isTransaction = true;
-    });
-    await Future.delayed(const Duration(seconds: 1));
-    Navigator.pushReplacementNamed(context, '/transactions');
-    setState(() {
-      isTransaction = false;
-    });
-  }
-
-  void _profile() async {
-    setState(() {
-      isProfile = true;
-    });
-    await Future.delayed(const Duration(seconds: 1));
-    Navigator.pushReplacementNamed(context, '/profile');
-    setState(() {
-      isProfile = false;
-    });
+    Navigator.pop(context);
   }
 
   Widget _getScreen(int index) {
     switch (index) {
       case 0:
-        return HomeScreen(
+        return DashboardScreen(
           username: _username,
           monthExpenses: monthExpenses,
           categoryExpenses: categoryExpenses,
@@ -233,14 +209,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       case 2:
         return NotificationScreen();
+      case 3:
+        return const TransactionsScreen();
+      case 4:
+        return const ProfileScreen();
       default:
-        return HomeScreen(
+        return DashboardScreen(
           username: _username,
           monthExpenses: monthExpenses,
           categoryExpenses: categoryExpenses,
           flipCardKey: _flipCardKey,
           currentMonth: currentMonth,
         );
+    }
+  }
+
+  String _getAppBarTitle(int index) {
+    switch (index) {
+      case 0:
+        return "Dashboard";
+      case 1:
+        return "Future Insight";
+      case 2:
+        return "Notifications";
+      case 3:
+        return "Transaction";
+      case 4:
+        return "Profile";
+      default:
+        return "Dashboard";
     }
   }
 
@@ -252,19 +249,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: isDarkMode
-          ? ThemeData.dark().copyWith(
-        primaryColor: Colors.black,
-        scaffoldBackgroundColor: Colors.black,
-      )
-          : ThemeData.light().copyWith(
-        primaryColor: Colors.white,
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      home:Scaffold(
+    return Scaffold(
         appBar: AppBar(
-          title: const Text("Dashboard", style: TextStyle(color: Colors.white)),
+          title: Text(
+            _getAppBarTitle(_selectedIndex), style: const TextStyle(color: Colors.white),
+          ),
           backgroundColor: const Color(0xFF053F5C),
           leading: Builder(
             builder: (context) {
@@ -397,56 +386,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const Divider(thickness: 1),
               ListTile(
                 leading: const Icon(Icons.dashboard_rounded),
-                title: Row(
-                  children: [
-                    const Text(
-                      'Dashboard',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    if (isDashboard)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: CircularProgressIndicator(color: Color(0xFF053F5C)),
-                      ),
-                  ],
+                title: const Text(
+                  'Dashboard',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                onTap: _dashboard,
+                selected: _selectedIndex == 0,
+                selectedTileColor: const Color(0xFFF27F0C),
+                onTap: () => _onDrawerTap(0),
               ),
               const Divider(thickness: 1),
               ListTile(
                 leading: const Icon(Icons.payment),
-                title: Row(
-                  children: [
-                    const Text(
-                      'Transactions',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    if (isTransaction)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: CircularProgressIndicator(color: Color(0xFF053F5C)),
-                      ),
-                  ],
+                title: const Text(
+                  'Transactions',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                onTap: _transactions,
+                selected: _selectedIndex == 3,
+                selectedTileColor: const Color(0xFFF27F0C),
+                onTap: () => _onDrawerTap(3),
               ),
               const Divider(thickness: 1,),
               ListTile(
                 leading: const Icon(Icons.person),
-                title: Row(
-                  children: [
-                    const Text(
-                      'Profile',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    if (isProfile)
-                      const Padding(
-                        padding: EdgeInsets.only(left: 10),
-                        child: CircularProgressIndicator(color: Color(0xFF053F5C)),
-                      ),
-                  ],
+                title: const Text(
+                  'Profile',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                onTap: _profile,
+                selected: _selectedIndex == 4,
+                selectedTileColor: const Color(0xFFF27F0C),
+                onTap: () => _onDrawerTap(4),
               ),
               const Divider(thickness: 1),
             ],
@@ -454,8 +422,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         body: _getScreen(_selectedIndex),
         bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
+          currentIndex: _selectedIndex > 2 ? 0 : _selectedIndex,
+          onTap: _onBottomTap,
           backgroundColor: const Color(0xFF1E5C78),
           selectedItemColor: Colors.black,
           unselectedItemColor: Colors.white,
@@ -493,19 +461,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 
-class HomeScreen extends StatefulWidget {
+class DashboardScreen extends StatefulWidget {
   final String? username;
   final double monthExpenses;
   final Map<String, double> categoryExpenses;
   final GlobalKey<FlipCardState> flipCardKey;
   final String currentMonth;
 
-  const HomeScreen({
+  const DashboardScreen({
     super.key,
     this.username,
     required this.monthExpenses,
@@ -518,7 +485,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _DashboardScreenState extends State<DashboardScreen> {
   int? touchedIndex;
 
   @override
@@ -1020,24 +987,3 @@ class NotificationScreen extends StatelessWidget {
     );
   }
 }
-
-// Container(
-// color: isDashboard ? Color(0xFFF27F0C) : Colors.white,
-// child: ListTile(
-// leading: const Icon(Icons.dashboard_rounded),
-// title: Row(
-// children: [
-// const Text(
-// 'Dashboard',
-// style: TextStyle(fontWeight: FontWeight.bold),
-// ),
-// if (isDashboard)
-// const Padding(
-// padding: EdgeInsets.only(left: 10),
-// child: CircularProgressIndicator(color: Color(0xFF053F5C)),
-// ),
-// ],
-// ),
-// onTap: _dashboard,
-// ),
-// ),

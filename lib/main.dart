@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:start1/auth/signup_screen.dart';
-import 'package:start1/screens/dashboard_screen.dart';
+import 'package:start1/screens/home_screen.dart';
 import 'package:start1/screens/profile_screen.dart';
 import 'package:start1/screens/transactions_screen.dart';
 import 'package:start1/ui/onboarding_screen.dart';
@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
         '/onboard': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
-        '/dashboard': (context) => const DashboardScreen(),
+        '/dashboard': (context) => const HomeScreen(),
         '/transactions': (context) => const TransactionsScreen(),
         '/profile': (context) => const ProfileScreen(),
       },

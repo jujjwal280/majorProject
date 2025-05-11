@@ -50,7 +50,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
           if (_currentPage == 2)
             Positioned(
-              bottom: 80, // Adjust the position to place the buttons above the dots
+              bottom: 80,
               left: 24,
               right: 24,
               child: Column(

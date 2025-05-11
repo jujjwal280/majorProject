@@ -16,24 +16,17 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
   @override
   void initState() {
     super.initState();
-
-    // Initialize animation controller
     _controller = AnimationController(
       duration: const Duration(seconds: 3),
       vsync: this,
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-
-    // Start the animation
     _controller.forward();
-
-    // Call the checkAuthentication method after animation starts
     splashServices.checkAuthentication(context);
   }
 
   @override
   void dispose() {
-    // Dispose of the animation controller to avoid memory leaks
     _controller.dispose();
     super.dispose();
   }
