@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:start1/auth/login_screen.dart';
-import '../screens/home_screen.dart';
 import '../ui/splash_screen.dart';
 import 'package:crypto/crypto.dart';
 import 'dart:convert';
@@ -89,10 +88,7 @@ class _SignupScreenState extends State<SignupScreen> {
         const SnackBar(content: Text('Account created successfully!')),
       );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
+      Navigator.pushReplacementNamed(context, '/home');
     } on FirebaseAuthException catch (e) {
       String errorMessage = 'Signup failed. Please try again.';
       if (e.code == 'email-already-in-use') {

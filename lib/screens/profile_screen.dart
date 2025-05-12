@@ -182,11 +182,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text('Update your Profile $_username', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
               ],
+              const SizedBox(height: 10),
               TextField(
                 controller: _usernameController,
                 decoration: InputDecoration(
-                  labelText: 'Username', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
-                  filled: true,fillColor: const Color(0xFF429EBD).withAlpha((0.2 * 255).toInt()),
+                  labelText: 'Username',
+                  filled: true,fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(15),
                     borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
@@ -200,7 +201,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  labelText: 'Email', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                  labelText: 'Email',
                   filled: true,
                   fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
@@ -215,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextField(
                 controller: _phoneNumberController,
                 decoration: InputDecoration(
-                  labelText: 'Phone Number', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                  labelText: 'Phone Number',
                   filled: true,
                   fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
@@ -232,7 +233,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 readOnly: true,
                 onTap: () => _selectDate(context),
                 decoration: InputDecoration(
-                  labelText: 'Date of Birth (DD/MM/YYYY)', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                  labelText: 'Date of Birth (DD/MM/YYYY)',
                   filled: true,
                   fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
@@ -273,7 +274,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextField(
                 controller: _ageController,
                 decoration: InputDecoration(
-                  labelText: 'Age', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                  labelText: 'Age',
                   filled: true,
                   fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
@@ -288,7 +289,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextField(
                 controller: _addressController,
                 decoration: InputDecoration(
-                  labelText: 'Address', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                  labelText: 'Address',
                   filled: true,
                   fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
@@ -314,7 +315,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   });
                 },
                 decoration: InputDecoration(
-                  labelText: 'Bank Name', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                  labelText: 'Bank Name',
                   filled: true,
                   fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
@@ -329,7 +330,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               TextField(
                 controller: _accountNumberController,
                 decoration: InputDecoration(
-                  labelText: 'Account Number', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                  labelText: 'Account Number',
                   filled: true,
                   fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                   focusedBorder: OutlineInputBorder(
@@ -340,7 +341,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 60),
+              const SizedBox(height: 30),
               Center(
                 child: ElevatedButton(
                   onPressed: _updateUserProfile,

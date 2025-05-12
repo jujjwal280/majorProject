@@ -12,7 +12,14 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
+
+  const HomeScreen({
+    super.key,
+    required this.isDarkMode,
+    required this.onThemeToggle,
+  });
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -32,7 +39,6 @@ class _HomeScreenState extends State<HomeScreen> {
   bool isProfile = false;
   bool isTransaction = false;
   bool isLogout = false;
-  bool isDarkMode = false;
   final GlobalKey<FlipCardState> _flipCardKey = GlobalKey<FlipCardState>();
 
 
@@ -210,7 +216,9 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         return NotificationScreen();
       case 3:
-        return const TransactionsScreen();
+        return TransactionsScreen(
+          onTransactionChanged: _fetchExpenses,
+        );
       case 4:
         return const ProfileScreen();
       default:
@@ -241,12 +249,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _toggleDarkMode() {
-    setState(() {
-      isDarkMode = !isDarkMode;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
           leading: Builder(
             builder: (context) {
               return IconButton(
-                icon: const Icon(Icons.menu_rounded, size: 28, color: Colors.black,),
+                icon: const Icon(Icons.menu_rounded, size: 28),
                 onPressed: () {
                   Scaffold.of(context).openDrawer();
                 },
@@ -270,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(
                 Icons.logout,
                 size: 28,
-                color: isDarkMode ? Colors.white : Colors.black,
+                color: widget.isDarkMode ? Colors.white : Colors.black,
               ),
               onPressed: () {
                 showDialog(
@@ -321,10 +323,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
             IconButton(
               icon: Icon(
-                isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-                color: isDarkMode ? Colors.white : Colors.black,
+                widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                color: widget.isDarkMode ? Colors.white : Colors.black,
               ),
-              onPressed: _toggleDarkMode,
+              onPressed: widget.onThemeToggle,
             ),
           ],
         ),
@@ -385,10 +387,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const Divider(thickness: 1),
               ListTile(
-                leading: const Icon(Icons.dashboard_rounded),
-                title: const Text(
+                leading: const Icon(Icons.dashboard_rounded, color: Color(0xFF053F5C)),
+                title: Text(
                   'Dashboard',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black,),
                 ),
                 selected: _selectedIndex == 0,
                 selectedTileColor: const Color(0xFFF27F0C),
@@ -396,10 +398,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const Divider(thickness: 1),
               ListTile(
-                leading: const Icon(Icons.payment),
-                title: const Text(
+                leading: const Icon(Icons.payment, color: Color(0xFF053F5C)),
+                title: Text(
                   'Transactions',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black,),
                 ),
                 selected: _selectedIndex == 3,
                 selectedTileColor: const Color(0xFFF27F0C),
@@ -407,10 +409,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const Divider(thickness: 1,),
               ListTile(
-                leading: const Icon(Icons.person),
-                title: const Text(
+                leading: const Icon(Icons.person, color: Color(0xFF053F5C)),
+                title: Text(
                   'Profile',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black,),
                 ),
                 selected: _selectedIndex == 4,
                 selectedTileColor: const Color(0xFFF27F0C),

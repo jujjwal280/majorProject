@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({super.key});
+  final VoidCallback? onTransactionChanged;
+  const TransactionsScreen({super.key, this.onTransactionChanged});
+
 
   @override
   _TransactionsScreenState createState() => _TransactionsScreenState();
@@ -102,7 +104,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Transaction added successfully!')),
           );
-
+          widget.onTransactionChanged?.call();
           _formKey.currentState!.reset();
           Navigator.pop(context);
         } catch (error) {
@@ -159,7 +161,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     ),
                   );
                 }
-
                 final dataDocs = snapshot.data!.docs;
                 double totalExpenditure = 0.0;
                 Map<String, Map<int, Map<String, List<Widget>>>> groupedTransactions = {};
@@ -213,6 +214,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               icon: const Icon(Icons.delete, color: Colors.black),
                               onPressed: () async {
                                 await transactions.doc(doc.id).delete();
+                                widget.onTransactionChanged?.call();
                               },
                             ),
                           ],
@@ -358,7 +360,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 category,
                                 style: const TextStyle(
                                   fontSize: 16,
-                                  color: Colors.black,
                                 ),
                               ),
                             ),
@@ -368,9 +369,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             _selectedCategory = value;
                           }),
                           decoration: InputDecoration(
-                            labelText: 'Category', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                            labelText: 'Category',
                             filled: true,
-                            fillColor: const Color(0xFF429EBD).withAlpha((0.8 * 255).toInt()),
+                            fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                             ),
@@ -386,9 +387,9 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         TextFormField(
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
-                            labelText: 'Amount', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                            labelText: 'Amount',
                             filled: true,
-                            fillColor: const Color(0xFF429EBD).withAlpha((0.8 * 255).toInt()),
+                            fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                             ),
@@ -396,25 +397,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
                             ),
                           ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter an amount';
-                            }
-                            final parsed = double.tryParse(value);
-                            if (parsed == null || parsed <= 0) {
-                              return 'Enter a valid positive number';
-                            }
-                            return null;
-                          },
-                          onSaved: (value) => _amount = double.parse(value!),
+                          onSaved: (value) => _description = value,
                           style: const TextStyle(color: Colors.black),
                         ),
                         const SizedBox(height: 10),
                         TextFormField(
                           decoration: InputDecoration(
-                            labelText: 'Description', labelStyle: const TextStyle(color: Color(0xFF053F5C),),
+                            labelText: 'Description',
                             filled: true,
-                            fillColor: const Color(0xFF429EBD).withAlpha((0.8 * 255).toInt()),
+                            fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                             ),
@@ -434,7 +425,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                   : '${_selectedDate!.toLocal()}'.split(' ')[0],
                               style: const TextStyle(
                                 fontSize: 16,
-                                color: Colors.black,
                               ),
                             ),
                             IconButton(
