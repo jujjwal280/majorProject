@@ -82,6 +82,7 @@ class _SignupScreenState extends State<SignupScreen> {
         'passwordHash': hashedPassword, // Save the hashed password
         'email': email,
         'createdAt': FieldValue.serverTimestamp(),
+        'isAdmin': false,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(

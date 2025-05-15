@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
       showSnackbar('Login Successful!');
 
       await Future.delayed(const Duration(seconds: 1));
-      Navigator.pushReplacementNamed(context, '/dashboard');
+      Navigator.pushReplacementNamed(context, '/home');
     } on FirebaseAuthException catch (e) {
       showSnackbar(e.message ?? 'Login failed. Please try again.');
     } finally {

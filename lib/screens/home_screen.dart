@@ -1,15 +1,15 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flip_card/flip_card.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:start1/screens/profile_screen.dart';
-import 'package:start1/screens/transactions_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'package:start1/screens/drawer/profile_screen.dart';
+import 'package:start1/screens/drawer/transactions_screen.dart';
+import 'bottomBar/insight_screen.dart';
+import 'bottomBar/notification_screen.dart';
+import 'drawer/admin_screen.dart';
+import 'drawer/feedback_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final bool isDarkMode;
@@ -26,6 +26,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool isAdmin = false;
   int _selectedIndex = 0;
   double monthExpenses = 0;
   double predictedExpense= 0;
@@ -67,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _username = userDoc['username'] ?? 'User Name';
             _accountNumber = userDoc['account_number'] ?? 'Account Number';
             _bankName = userDoc['bank_name'] ?? 'Bank Name';
+            isAdmin = userDoc['isAdmin'] ?? false;
           });
         }
       } catch (e) {
@@ -221,6 +223,10 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       case 4:
         return const ProfileScreen();
+      case 5:
+        return const FeedbackScreen();
+      case 6:
+        return const AdminScreen();
       default:
         return DashboardScreen(
           username: _username,
@@ -244,6 +250,10 @@ class _HomeScreenState extends State<HomeScreen> {
         return "Transaction";
       case 4:
         return "Profile";
+      case 5:
+        return "Feedback";
+      case 6:
+        return "Admin";
       default:
         return "Dashboard";
     }
@@ -419,6 +429,32 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () => _onDrawerTap(4),
               ),
               const Divider(thickness: 1),
+              ListTile(
+                leading: const Icon(Icons.feedback_rounded, color: Color(0xFF053F5C)),
+                title: Text(
+                  'Feedback',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black,),
+                ),
+                selected: _selectedIndex == 5,
+                selectedTileColor: const Color(0xFFF27F0C),
+                onTap: () => _onDrawerTap(5),
+              ),
+              const Divider(thickness: 1),
+              if (isAdmin)
+                ListTile(
+                  leading: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF053F5C)),
+                  title: Text(
+                    'Admin',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: widget.isDarkMode ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  selected: _selectedIndex == 6,
+                  selectedTileColor: const Color(0xFFF27F0C),
+                  onTap: () => _onDrawerTap(6),
+                ),
+              const Divider(thickness: 1),
             ],
           ),
         ),
@@ -579,7 +615,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 titleStyle: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
                                 ),
                               );
                             }).toList(),
@@ -698,294 +733,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           )
         ],
       ),
-    );
-  }
-}
-
-class FutureInsightScreen extends StatefulWidget {
-  final String? username;
-  final double? predictedExpense;
-  final String? nextMonth;
-
-  const FutureInsightScreen({
-    super.key,
-    this.username,
-    required this.predictedExpense,
-    required this.nextMonth,
-  });
-
-  @override
-  State<FutureInsightScreen> createState() => _FutureInsightScreenState();
-}
-
-class _FutureInsightScreenState extends State<FutureInsightScreen> {
-  double? predictedExpense;
-  String? nextMonth;
-  bool _isLoading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    predictedExpense = widget.predictedExpense;
-    nextMonth = widget.nextMonth;
-    loadPredictedExpense();
-  }
-
-  Future<void> loadPredictedExpense() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    double? storedExpense = prefs.getDouble('predictedExpense');
-    if (storedExpense != null) {
-      setState(() {
-        predictedExpense = storedExpense;
-      });
-    }
-  }
-
-  Future<void> triggerPredictionAPI() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      if (kDebugMode) {
-        print("❌ No user logged in.");
-      }
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    final url = Uri.parse(
-      'https://ae60f539-d299-4b88-af7e-d19af12b951d-00-3b1kce09qe2qk.sisko.replit.dev/predict',
-    );
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({'uid': user.uid}), // ✅ Send UID in body
-      );
-
-      if (response.statusCode == 200) {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('prediction')
-            .doc('next_month')
-            .get();
-
-        if (doc.exists) {
-          final data = doc.data()!;
-          final newPredictedExpense = data['predicted_expense']?.toDouble();
-
-          // Update state with the new predicted expense
-          setState(() {
-            predictedExpense = newPredictedExpense;
-          });
-
-          // Save the updated expense value to SharedPreferences
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          prefs.setDouble('predictedExpense', predictedExpense ?? 0.0);
-        }
-      } else {
-        if (kDebugMode) {
-          print("❌ Prediction API failed: ${response.body}");
-        }
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print("🔥 Error calling prediction API: $e");
-      }
-    }
-
-    setState(() {
-      _isLoading = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: RefreshIndicator(
-        color: const Color(0xFF053F5C),
-        onRefresh: triggerPredictionAPI,
-        child: ListView(
-          padding: const EdgeInsets.all(10.0),
-          children: [
-            const SizedBox(height: 5),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                'Predicted Value!',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Card(
-              elevation: 8,
-              color: const Color(0xFFF5F5F5),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 30,
-                      child: Text(
-                        "$nextMonth's Expenditure",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF053F5C),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    predictedExpense != null
-                        ? Text(
-                      "₹${predictedExpense!.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red[900],
-                      ),
-                    )
-                        : Text(
-                      "Not enough data to predict 💤",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.red[900],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: Text(
-                "Push down to refresh",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red[900],
-                ),
-              ),
-            ),
-            const SizedBox(height: 450),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Text(
-                "📝 To get your predicted expense, make sure you’ve added transactions for at least 2 months.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[700],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class NotificationScreen extends StatelessWidget {
-  final List<Map<String, String>> notifications = [
-    {
-      "message": "Updates are available! Update your app to access more functionality.",
-      "url": "https://drive.google.com/drive/folders/1GJ07mHcpegXa4DPTPsu2kH72vDwaBnyA?usp=sharing",
-    },
-    {
-      "message": "Check out us on our website!",
-      "url": "https://example.com/features",
-    },
-  ];
-
-  NotificationScreen({super.key});
-
-  void _launchURL(BuildContext context, String url) async {
-    if (await canLaunchUrl(url as Uri)) {
-      launchUrl;
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Could not open the link. Please try again."),
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: notifications.length,
-      itemBuilder: (context, index) {
-        final notification = notifications[index];
-        return Card(
-          elevation: 4,
-          margin: const EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.notification_important_rounded,
-                      color: Color(0xFFF27F0C),
-                      size: 30,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        notification["message"] ?? "",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    onPressed: () => _launchURL(context, notification["url"] ?? ""),
-                    icon: const Icon(Icons.download_rounded, color: Colors.redAccent),
-                    label: const Text(
-                      ' Open  ',
-                      style: TextStyle(fontSize: 14, color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      backgroundColor: const Color(0xFF053F5C),
-                        minimumSize: const Size(100, 40)
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

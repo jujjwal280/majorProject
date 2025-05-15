@@ -4,13 +4,17 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:start1/auth/signup_screen.dart';
 import 'package:start1/screens/home_screen.dart';
-import 'package:start1/screens/profile_screen.dart';
-import 'package:start1/screens/transactions_screen.dart';
+import 'package:start1/screens/drawer/profile_screen.dart';
+import 'package:start1/screens/drawer/transactions_screen.dart';
 import 'package:start1/ui/onboarding_screen.dart';
 import 'package:start1/ui/splash_screen.dart';
 import 'package:start1/auth/login_screen.dart';
 import 'package:start1/firebase_options.dart';
 import 'package:start1/ui/notification_services.dart';
+import 'screens/bottomBar/insight_screen.dart';
+import 'screens/bottomBar/notification_screen.dart';
+import 'screens/drawer/admin_screen.dart';
+import 'screens/drawer/feedback_screen.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -24,8 +28,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
-  // Initialize Firebase Messaging
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await NotificationService.initialize();
 
@@ -77,8 +79,15 @@ class _MyAppState extends State<MyApp> {
           isDarkMode: _isDarkMode,
           onThemeToggle: _toggleThemeMode,
         ),
+        '/insight': (context) => const FutureInsightScreen(
+          predictedExpense: null,
+          nextMonth: '',
+        ),
+        '/notify': (context) => NotificationScreen(),
         '/transactions': (context) => const TransactionsScreen(),
         '/profile': (context) => const ProfileScreen(),
+        '/feedback': (context) => const FeedbackScreen(),
+        '/admin': (context) => const AdminScreen(),
       },
     );
   }

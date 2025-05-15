@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:start1/ui/onboarding_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class SplashServices {
