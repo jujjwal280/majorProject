@@ -12,13 +12,11 @@ class AdminScreen extends StatelessWidget {
     return DateFormat('yyyy-MM-dd • hh:mm a').format(date);
   }
 
-  // Method to check if the user is an admin
   Future<bool> _isAdmin() async {
     try {
       User? user = FirebaseAuth.instance.currentUser;
       if (user != null) {
         IdTokenResult idTokenResult = await user.getIdTokenResult(true);
-        // Check if the 'admin' claim is true
         return idTokenResult.claims?['admin'] == true;
       }
     } catch (e) {
@@ -30,10 +28,6 @@ class AdminScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('User Feedback'),
-        backgroundColor: const Color(0xFF1E5C78),
-      ),
       body: FutureBuilder<bool>(
         future: _isAdmin(),
         builder: (context, snapshot) {
@@ -51,7 +45,6 @@ class AdminScreen extends StatelessWidget {
             return const Center(child: Text('You are not authorized to view feedback.'));
           }
 
-          // If the user is an admin, fetch feedback
           return StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
                 .collection('feedback')
@@ -79,31 +72,23 @@ class AdminScreen extends StatelessWidget {
                   final feedback = feedbacks[index];
                   final feedbackText = feedback['feedback'] ?? 'No feedback';
                   final timestamp = feedback['timestamp'];
-                  final userId = feedback['userId'] ?? 'Unknown User';
+                  final userName = feedback['userName'] ?? 'Unknown User';
 
                   return Card(
-                    elevation: 2,
-                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    elevation: 8,
+                    color: const Color(0xFFF5F5F5),
                     child: Padding(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(16.0),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            feedbackText,
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
                           Row(
                             children: [
                               Expanded(
                                 child: Text(
-                                  'User ID: $userId',
+                                  'User Name: $userName',
                                   style: const TextStyle(
-                                      fontSize: 12, color: Colors.grey),
+                                      fontSize: 12
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -111,9 +96,19 @@ class AdminScreen extends StatelessWidget {
                               Text(
                                 _formatTimestamp(timestamp),
                                 style: const TextStyle(
-                                    fontSize: 12, color: Colors.grey),
+                                    fontSize: 12
+                                ),
                               ),
                             ],
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            feedbackText,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red[900],
+                            ),
                           ),
                         ],
                       ),

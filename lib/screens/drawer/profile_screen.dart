@@ -20,9 +20,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _bankName;
   String? _accountNumber;
   int? _age;
-  bool isDashboard = false;
-  bool isProfile = false;
-  bool isTransaction = false;
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -54,13 +51,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _fetchUserProfile();
   }
 
+  void showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   void _fetchUserProfile() async {
     final User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      // Safely access the user.uid
       if (kDebugMode) {
-        print("User UID: ${user.uid}");
+        showSnackbar("User UID: ${user.uid}");
       }
 
       try {
@@ -93,12 +95,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           });
         } else {
           if (kDebugMode) {
-            print("User document does not exist");
+            showSnackbar("User document does not exist");
           }
         }
       } catch (e) {
         if (kDebugMode) {
-          print("Error fetching user profile: $e");
+          showSnackbar("Error fetching user profile: $e");
         }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Failed to load profile data")),
@@ -106,7 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } else {
       if (kDebugMode) {
-        print("No user is signed in.");
+        showSnackbar("No user is signed in.");
       }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No user is signed in")),
@@ -138,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       } catch (e) {
         if (kDebugMode) {
-          print("Error updating user profile: $e");
+          showSnackbar("Error updating user profile: $e");
         }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text("Failed to update profile")),

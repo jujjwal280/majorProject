@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key}); // Ensure the constructor is marked as 'const'
+  const OnboardingScreen({super.key});
 
   @override
   _OnboardingScreenState createState() => _OnboardingScreenState();
@@ -25,17 +25,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
             children: [
               const OnboardingPage(
-                image: Icons.tune,
+                image: Icons.tune_rounded,
                 title: "Gain total control of your money",
                 description: "Become your own money manager and make every cent count.",
               ),
               const OnboardingPage(
-                image: Icons.account_balance_wallet,
+                image: Icons.account_balance_wallet_rounded,
                 title: "Know where your money goes",
                 description: "Track your transactions easily with categories and financial reports.",
               ),
               OnboardingPage(
-                image: Icons.checklist,
+                image: Icons.checklist_rounded,
                 title: "Planning ahead",
                 description: "Setup your budget for each category so you're in control.",
                 showButtons: true,
@@ -143,13 +143,13 @@ class OnboardingPage extends StatelessWidget {
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color : Color(0xFFF27F0C)),
           ),
           const SizedBox(height: 12),
           Text(
             description,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 18, color: Colors.black54),
+            style: const TextStyle(fontSize: 18,),
           ),
         ],
       ),

@@ -12,8 +12,30 @@ class FeedbackScreen extends StatefulWidget {
 class _FeedbackScreenState extends State<FeedbackScreen> {
   final _formKey = GlobalKey<FormState>();
   final _feedbackController = TextEditingController();
+  String? _username;
 
-  // Function to submit feedback to Firestore
+  @override
+
+  void initState() {
+    super.initState();
+    _fetchUserDetails();
+  }
+
+  void _fetchUserDetails() async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (userDoc.exists) {
+        setState(() {
+          _username = userDoc['username'] ?? 'User Name';
+        });
+      }
+    }
+  }
+
   Future<void> _submitFeedback() async {
     if (_formKey.currentState?.validate() ?? false) {
       final feedback = _feedbackController.text.trim();
@@ -22,18 +44,16 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       if (user != null) {
         await FirebaseFirestore.instance.collection('feedback').add({
           'feedback': feedback,
-          'userId': user.uid,
+          'userName': _username,
           'timestamp': FieldValue.serverTimestamp(),
         });
 
         _feedbackController.clear();
-
-        // Creative confirmation message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Row(
               children: const [
-                Icon(Icons.check_circle, color: Colors.green),
+                Icon(Icons.send_rounded),
                 SizedBox(width: 8),
                 Text('Feedback sent! Thanks for helping us improve 💬'),
               ],
@@ -50,45 +70,53 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Submit Feedback')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Write your thoughts below:',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 20),
-              TextFormField(
-                controller: _feedbackController,
-                maxLines: 5,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: 'Write your feedback here...',
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                Text(
+                  'Your thoughts will be shown to Admin',
+                  style: Theme.of(context).textTheme.titleLarge,
                 ),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Please enter your feedback';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 20),
-              Center(
-                child: ElevatedButton.icon(
-                  onPressed: _submitFeedback,
-                  icon: const Icon(Icons.send),
-                  label: const Text('Submit'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _feedbackController,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: 'Write your feedback here...',
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Please enter your feedback';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: _submitFeedback,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      backgroundColor: const Color(0xFF053F5C),
+                    ),
+                    child: const Text(
+                      '   Submit   ',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

@@ -36,9 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _username;
   String? _accountNumber;
   String? _bankName;
-  bool isDashboard = false;
-  bool isProfile = false;
-  bool isTransaction = false;
   bool isLogout = false;
   final GlobalKey<FlipCardState> _flipCardKey = GlobalKey<FlipCardState>();
 
@@ -73,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       } catch (e) {
         if (kDebugMode) {
-          print("Error fetching user details: $e");
+          showSnackbar("Error fetching user details: $e");
         }
       }
     }
@@ -102,7 +99,7 @@ class _HomeScreenState extends State<HomeScreen> {
         }
       } catch (e) {
         if (kDebugMode) {
-          print('Error fetching predicted expense: $e');
+          showSnackbar('Error fetching predicted expense: $e');
         }
       }
     }
@@ -150,10 +147,16 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       } catch (e) {
         if (kDebugMode) {
-          print("Error fetching expenses: $e");
+          showSnackbar("Error fetching expenses: $e");
         }
       }
     }
+  }
+
+  void showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   String _getCurrentMonth() {
@@ -184,6 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       isLogout = true;
     });
+    widget.onThemeToggle;
     await Future.delayed(const Duration(seconds: 1));
     await FirebaseAuth.instance.signOut();
     Navigator.pushReplacementNamed(context, '/login');
@@ -323,7 +327,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         )
                             : const Text(
                           '  LogOut   ',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                          ),
                         ),
                       ),
                     ],
@@ -375,14 +383,14 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              _accountNumber ?? 'Phone Number',
+                              _accountNumber ?? 'Account Number',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.white70,
                               ),
                             ),
                             Text(
-                              _bankName ?? 'Phone Number',
+                              _bankName ?? 'Bank Name',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.white70,
@@ -408,7 +416,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const Divider(thickness: 1),
               ListTile(
-                leading: const Icon(Icons.payment, color: Color(0xFF053F5C)),
+                leading: const Icon(Icons.payment_rounded, color: Color(0xFF053F5C)),
                 title: Text(
                   'Transactions',
                   style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black,),
@@ -462,7 +470,7 @@ class _HomeScreenState extends State<HomeScreen> {
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _selectedIndex > 2 ? 0 : _selectedIndex,
           onTap: _onBottomTap,
-          backgroundColor: const Color(0xFF1E5C78),
+          backgroundColor: const Color(0xFF053F5C),
           selectedItemColor: Colors.black,
           unselectedItemColor: Colors.white,
           selectedLabelStyle: const  TextStyle(
@@ -615,6 +623,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 titleStyle: const TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               );
                             }).toList(),
@@ -710,7 +719,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 elevation: 4,
                 margin: const EdgeInsets.symmetric(vertical: 8),
                 child: ListTile(
-                  leading: const Icon(Icons.shopping_cart, color: Color(0xFF053F5C)),
+                  leading: const Icon(Icons.shopping_cart_rounded, color: Color(0xFF053F5C)),
                   title: Text(
                     entry.key,
                     style: const TextStyle(

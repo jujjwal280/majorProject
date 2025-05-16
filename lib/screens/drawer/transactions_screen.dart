@@ -20,9 +20,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   String? _description;
   DateTime? _selectedDate;
   int _selectedYear = DateTime.now().year;
-  bool isDashboard = false;
-  bool isProfile = false;
-  bool isTransaction = false;
 
   @override
   void initState() {
@@ -45,10 +42,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         }
       } catch (e) {
         if (kDebugMode) {
-          print("Error fetching user details: $e");
+          showSnackbar("Error fetching user details: $e");
         }
       }
     }
+  }
+
+  void showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   final List<String> _categories = [
@@ -197,7 +200,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       elevation: 4,
                       margin: const EdgeInsets.symmetric(vertical: 8),
                       child: ListTile(
-                        leading: const Icon(Icons.shopping_cart, color: Color(0xFF053F5C)),
+                        leading: const Icon(
+                            Icons.shopping_cart_rounded,
+                            color: Color(0xFF053F5C)
+                        ),
                         title: Text(data['category'] ?? 'Unknown'),
                         subtitle: Text(data['description'] ?? 'No description'),
                         trailing: Row(
@@ -208,10 +214,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               style: const TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.bold,
+                                  color: Color(0xFF053F5C)
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.delete, color: Colors.black),
+                              icon: const Icon(Icons.delete_rounded, color: Colors.red),
                               onPressed: () async {
                                 await transactions.doc(doc.id).delete();
                                 widget.onTransactionChanged?.call();
@@ -233,7 +240,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: ListView(
                     children: [
-                      // Display overall expenditure for the selected year
                       Card(
                         elevation: 8,
                         color: Colors.white.withAlpha((0.8 * 255).toInt()),
@@ -428,7 +434,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               ),
                             ),
                             IconButton(
-                              icon: const Icon(Icons.calendar_today, color: Color(0xFF1E5C78)
+                              icon: const Icon(Icons.calendar_today_rounded, color: Color(0xFF1E5C78)
                               ),
                               onPressed: () => _selectDate(context),
                             ),
@@ -458,7 +464,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
           );
         },
         backgroundColor: const Color(0xFF053F5C),
-        child: const Icon(Icons.add,color: Colors.white),
+        child: const Icon(Icons.add_rounded,color: Colors.white),
       ),
     );
   }

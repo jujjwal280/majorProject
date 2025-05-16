@@ -70,7 +70,7 @@ class NotificationScreen extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: ElevatedButton.icon(
                     onPressed: () => _launchURL(context, notification["url"] ?? ""),
-                    icon: const Icon(Icons.download_rounded, color: Colors.redAccent),
+                    icon: const Icon(Icons.open_in_new_rounded, color: Colors.redAccent),
                     label: const Text(
                       ' Open  ',
                       style: TextStyle(fontSize: 14, color: Colors.white),

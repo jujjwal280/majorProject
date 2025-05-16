@@ -137,7 +137,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   color: Color(0xFF053F5C),
                 ),
               ),
-              const SizedBox(height: 205),
+              const SizedBox(height: 200),
               Form(
                 key: _formKey,
                 child: Column(
@@ -205,7 +205,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           );
                         },
                         child: const Text(
-                          'Go to Splash Screen', style: TextStyle(color: Colors.black),
+                          'Go to Splash Screen',
                         ),
                       ),
                     ),
@@ -235,13 +235,13 @@ class _SignupScreenState extends State<SignupScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('Already have an account? ', style: TextStyle(color: Colors.black)),
+                        const Text('Already have an account? '),
                         GestureDetector(
                           onTap: () {
                             Navigator.push(context, MaterialPageRoute(builder: (context) => const LoginScreen()),
                             );
                           },
-                          child: const Text('Login', style: TextStyle(color: Color(0xFF053F5C), fontWeight: FontWeight.bold),
+                          child: const Text('Login', style: TextStyle(color: Color(0xFFF27F0C), fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
@@ -257,15 +257,16 @@ class _SignupScreenState extends State<SignupScreen> {
   }
   InputDecoration _buildInputDecoration(String hintText, IconData icon) {
     return InputDecoration(
-      hintText: hintText, hintStyle: const TextStyle(color: Color(0xFF053F5C),),
-      filled: true,fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+      hintText: hintText,
+      filled: true,
+      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
       ),
-      prefixIcon: Icon(icon, color: const Color(0xFF053F5C)),
+      prefixIcon: Icon(icon, color: Color(0xFF9FE7F5)),
     );
   }
 
@@ -274,7 +275,7 @@ class _SignupScreenState extends State<SignupScreen> {
       suffixIcon: IconButton(
         icon: Icon(
           _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-          color: const Color(0xFF053F5C),
+          color: Colors.red,
         ),
         onPressed: () {
           setState(() {

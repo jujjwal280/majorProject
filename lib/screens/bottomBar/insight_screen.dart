@@ -53,7 +53,7 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       if (kDebugMode) {
-        print("❌ No user logged in.");
+        showSnackbar("❌ No user logged in.");
       }
       setState(() {
         _isLoading = false;
@@ -71,7 +71,7 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({'uid': user.uid}), // ✅ Send UID in body
+        body: jsonEncode({'uid': user.uid}),
       );
 
       if (response.statusCode == 200) {
@@ -85,30 +85,33 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
         if (doc.exists) {
           final data = doc.data()!;
           final newPredictedExpense = data['predicted_expense']?.toDouble();
-
-          // Update state with the new predicted expense
           setState(() {
             predictedExpense = newPredictedExpense;
           });
 
-          // Save the updated expense value to SharedPreferences
           SharedPreferences prefs = await SharedPreferences.getInstance();
           prefs.setDouble('predictedExpense', predictedExpense ?? 0.0);
         }
       } else {
         if (kDebugMode) {
-          print("❌ Prediction API failed: ${response.body}");
+          showSnackbar("❌ Prediction API failed: ${response.body}");
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print("🔥 Error calling prediction API: $e");
+        showSnackbar("🔥 Error calling prediction API: $e");
       }
     }
 
     setState(() {
       _isLoading = false;
     });
+  }
+
+  void showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
@@ -195,6 +198,35 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 10),
+            // Column(
+            //   children: widget.categoryExpenses.entries.map((entry) {
+            //     return Card(
+            //       color: categoryColors[entry.key] ?? Colors.grey,
+            //       elevation: 4,
+            //       margin: const EdgeInsets.symmetric(vertical: 8),
+            //       child: ListTile(
+            //         leading: const Icon(Icons.shopping_cart_rounded, color: Color(0xFF053F5C)),
+            //         title: Text(
+            //           entry.key,
+            //           style: const TextStyle(
+            //             fontSize: 18,
+            //             fontWeight: FontWeight.bold,
+            //             color: Color(0xFF053F5C),
+            //           ),
+            //         ),
+            //         trailing: Text(
+            //           "₹${entry.value.toStringAsFixed(2)}",
+            //           style: const TextStyle(
+            //             fontSize: 15,
+            //             fontWeight: FontWeight.bold,
+            //             color: Colors.black,
+            //           ),
+            //         ),
+            //       ),
+            //     );
+            //   }).toList(),
+            // )
           ],
         ),
       ),

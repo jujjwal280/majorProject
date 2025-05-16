@@ -69,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const SizedBox(height: 50),  // Space before the title
+              const SizedBox(height: 80),  // Space before the title
               const Center(
                 child: Text(
                   "MoneyMinder",
@@ -86,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(
                     fontSize: 20.0,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFF1E5C78),
                   ),
                 ),
               ),
@@ -108,17 +107,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       decoration: InputDecoration(
                         hintText: 'Enter Your Email',
-                        hintStyle: const TextStyle(color: Color(0xFF053F5C)),
-                        filled: true,fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                        filled: true,
+                        fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                          borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                          borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
                         ),
-                        prefixIcon: const Icon(Icons.mail_outline_rounded, color: Color(0xFF053F5C)),
+                        prefixIcon: const Icon(Icons.mail_outline_rounded, color: Color(0xFF9FE7F5)),
                       ),
                     ),
                     const SizedBox(height: 15),
@@ -136,21 +133,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                       decoration: InputDecoration(
                         hintText: 'Enter Your Password',
-                        hintStyle: const TextStyle(color: Color(0xFF053F5C)),
-                        filled: true,fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                        filled: true,
+                        fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                          borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                          borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
                         ),
-                        prefixIcon: const Icon(Icons.lock_outline_rounded, color: Color(0xFF053F5C)),
+                        prefixIcon: const Icon(Icons.lock_outline_rounded, color : Color(0xFF9FE7F5)),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                            color: const Color(0xFF053F5C),
+                            color: Colors.red,
                           ),
                           onPressed: () {
                             setState(() {
@@ -166,11 +161,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: forgotPassword,
                         child: const Text(
                           'Forgot Password?',
-                          style: TextStyle(color: Colors.black),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 200),
+                    const SizedBox(height: 150),
                     // Login button
                     isLoading
                         ? const Center(
@@ -197,7 +191,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const Text(
                           'Create an account? ',
-                          style: TextStyle(color: Colors.black),
                         ),
                         GestureDetector(
                           onTap: () {
@@ -208,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           },
                           child: const Text(
                             'Sign up',
-                            style: TextStyle(color: Color(0xFF053F5C), fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Color(0xFFF27F0C), fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
