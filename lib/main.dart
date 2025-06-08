@@ -75,14 +75,8 @@ class _MyAppState extends State<MyApp> {
         '/onboard': (context) => const OnboardingScreen(),
         '/login': (context) => const LoginScreen(),
         '/signup': (context) => const SignupScreen(),
-        '/home': (context) => HomeScreen(
-          isDarkMode: _isDarkMode,
-          onThemeToggle: _toggleThemeMode,
-        ),
-        '/insight': (context) => const FutureInsightScreen(
-          predictedExpense: null,
-          nextMonth: '',
-        ),
+        '/home': (context) => HomeScreen(isDarkMode: _isDarkMode, onThemeToggle: _toggleThemeMode,),
+        '/insight': (context) => const FutureInsightScreen(predictedExpense: null, nextMonth: '',),
         '/notify': (context) => NotificationScreen(),
         '/transactions': (context) => const TransactionsScreen(),
         '/profile': (context) => const ProfileScreen(),

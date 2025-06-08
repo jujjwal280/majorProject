@@ -17,8 +17,18 @@ class NotificationScreen extends StatelessWidget {
   NotificationScreen({super.key});
 
   void _launchURL(BuildContext context, String url) async {
-    if (await canLaunchUrl(url as Uri)) {
-      launchUrl;
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("No link available."),
+        ),
+      );
+      return;
+    }
+
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -27,6 +37,7 @@ class NotificationScreen extends StatelessWidget {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

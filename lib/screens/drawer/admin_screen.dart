@@ -1,3 +1,4 @@
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,23 +7,16 @@ import 'package:intl/intl.dart';
 class AdminScreen extends StatelessWidget {
   const AdminScreen({super.key});
 
-  String _formatTimestamp(Timestamp? timestamp) {
-    if (timestamp == null) return 'Unknown date';
-    final date = timestamp.toDate();
-    return DateFormat('yyyy-MM-dd • hh:mm a').format(date);
-  }
-
   Future<bool> _isAdmin() async {
     try {
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        IdTokenResult idTokenResult = await user.getIdTokenResult(true);
-        return idTokenResult.claims?['admin'] == true;
-      }
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return false;
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      return doc.data()?['isAdmin'] == true;
     } catch (e) {
-      print("Error getting admin status: $e");
+      debugPrint('Error checking admin: $e');
+      return false;
     }
-    return false;
   }
 
   @override
@@ -30,96 +24,177 @@ class AdminScreen extends StatelessWidget {
     return Scaffold(
       body: FutureBuilder<bool>(
         future: _isAdmin(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+        builder: (context, adminSnapshot) {
+          if (adminSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-
-          if (snapshot.hasError) {
-            return const Center(child: Text('Error fetching admin status'));
-          }
-
-          bool isAdmin = snapshot.data ?? false;
-
-          if (!isAdmin) {
+          if (adminSnapshot.hasError || !(adminSnapshot.data ?? false)) {
             return const Center(child: Text('You are not authorized to view feedback.'));
           }
 
-          return StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('feedback')
-                .orderBy('timestamp', descending: true)
-                .snapshots(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
+          // Admin is authorized, show feedback list
+          return FeedbackList();
+        },
+      ),
+    );
+  }
+}
 
-              if (snapshot.hasError) {
-                return const Center(child: Text('Error fetching feedback'));
-              }
+class FeedbackList extends StatelessWidget {
+  FeedbackList({super.key});
 
-              final feedbacks = snapshot.data?.docs ?? [];
+  String _formatTimestamp(Timestamp? timestamp) {
+    if (timestamp == null) return 'Unknown date';
+    return DateFormat('yyyy-MM-dd • hh:mm a').format(timestamp.toDate());
+  }
 
-              if (feedbacks.isEmpty) {
-                return const Center(child: Text('No feedbacks available.'));
-              }
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('feedback')
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return const Center(child: Text('Error fetching feedback'));
+        }
 
-              return ListView.builder(
-                itemCount: feedbacks.length,
-                padding: const EdgeInsets.all(10),
-                itemBuilder: (context, index) {
-                  final feedback = feedbacks[index];
-                  final feedbackText = feedback['feedback'] ?? 'No feedback';
-                  final timestamp = feedback['timestamp'];
-                  final userName = feedback['userName'] ?? 'Unknown User';
+        final feedbacks = snapshot.data?.docs ?? [];
+        if (feedbacks.isEmpty) {
+          return const Center(child: Text('No feedbacks available.'));
+        }
 
-                  return Card(
-                    elevation: 8,
-                    color: const Color(0xFFF5F5F5),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Hello Admin 👋',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ExpansionTile(
+                  title: Text(
+                    'Feedbacks (${feedbacks.length})',
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  children: feedbacks.map((doc) {
+                    final data = doc.data() as Map<String, dynamic>? ?? {};
+                    final feedbackText = data['feedback'] ?? 'No feedback';
+                    final timestamp = data['timestamp'] as Timestamp?;
+                    final userName = data['userName'] ?? 'Unknown User';
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      elevation: 3,
+                      child: ExpansionTile(
+                        title: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'User: $userName',
+                                style: const TextStyle(fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              _formatTimestamp(timestamp),
+                              style: const TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete_rounded,
+                                color: Colors.red,
+                                size: 28,
+                              ),
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text(
+                                        'Are you sure you want to delete?',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false),
+                                          child: const Text(
+                                            'Cancel',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              color: Colors.black,
+                                            ),
+                                          ),
+                                        ),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(vertical: 12),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            backgroundColor: const Color(0xFF053F5C),
+                                          ),
+                                          onPressed: () => Navigator.of(context).pop(true),
+                                          child: const Text(
+                                            '  Delete   ',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (confirm == true) {
+                                    await FirebaseFirestore.instance
+                                        .collection('feedback')
+                                        .doc(doc.id)
+                                        .delete();
+                                  }
+                                }
+                            ),
+                          ],
+                        ),
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'User Name: $userName',
-                                  style: const TextStyle(
-                                      fontSize: 12
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            child: Text(
+                              feedbackText,
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.red[900],
                               ),
-                              const SizedBox(width: 10),
-                              Text(
-                                _formatTimestamp(timestamp),
-                                style: const TextStyle(
-                                    fontSize: 12
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            feedbackText,
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red[900],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

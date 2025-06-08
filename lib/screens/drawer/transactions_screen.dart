@@ -397,13 +397,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             filled: true,
                             fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
                             ),
                           ),
-                          onSaved: (value) => _description = value,
+                          onSaved: (value) {
+                            _amount = double.tryParse(value!.trim());
+                          },
                           style: const TextStyle(color: Colors.black),
                         ),
                         const SizedBox(height: 10),

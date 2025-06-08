@@ -55,7 +55,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               children: const [
                 Icon(Icons.send_rounded),
                 SizedBox(width: 8),
-                Text('Feedback sent! Thanks for helping us improve 💬'),
+                Text('Feedback sent! Thanks for helping us improve'),
               ],
             ),
             backgroundColor: Colors.black87,
