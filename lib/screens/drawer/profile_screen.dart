@@ -29,9 +29,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _accountNumberController = TextEditingController();
 
-  String? _selectedGender;
   String? _selectedBank;
-  final List<String> _genderOptions = ['Male', 'Female'];
+  String? _selectedGender;
+
+  List<String> _genderOptions = ['Male', 'Female', 'Other'];
   final List<String> _bankOptions = [
     'Axis Bank',
     'Bank of Baroda',
@@ -48,23 +49,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchUserProfile();
+    // Defer fetching profile to after first frame to safely use context.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchUserProfile();
+    });
   }
 
   void showSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    });
   }
 
   void _fetchUserProfile() async {
     final User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      if (kDebugMode) {
-        showSnackbar("User UID: ${user.uid}");
-      }
-
       try {
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
@@ -90,8 +92,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _addressController.text = _address ?? '';
             _ageController.text = (_age ?? 0).toString();
             _accountNumberController.text = _accountNumber ?? '';
-            _selectedGender = _gender;
-            _selectedBank = _bankName;
+            _selectedGender = _genderOptions.contains(userDoc['sex']) ? userDoc['sex'] : null;
+            _selectedBank = _bankOptions.contains(userDoc['bank_name']) ? userDoc['bank_name'] : null;
           });
         } else {
           if (kDebugMode) {
@@ -102,19 +104,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (kDebugMode) {
           showSnackbar("Error fetching user profile: $e");
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to load profile data")),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Failed to load profile data")),
+          );
+        });
       }
     } else {
       if (kDebugMode) {
         showSnackbar("No user is signed in.");
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("No user is signed in")),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("No user is signed in")),
+        );
+      });
     }
-
   }
 
   void _updateUserProfile() async {
@@ -134,20 +139,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'age': int.tryParse(_ageController.text) ?? 0,
         });
 
-        // Show a success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Profile updated successfully")),
-        );
+        // Show a success message deferred after frame
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Profile updated successfully")),
+          );
+        });
       } catch (e) {
         if (kDebugMode) {
           showSnackbar("Error updating user profile: $e");
         }
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Failed to update profile")),
-        );
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Failed to update profile")),
+          );
+        });
       }
     }
-    Navigator.pushReplacementNamed(context, '/dashboard');
+
+    // Also delay navigation after frame so context is safe
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.pushReplacementNamed(context, '/home');
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
