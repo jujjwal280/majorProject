@@ -80,7 +80,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
               children: [
                 Text('Update your Profile $_username', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 10),
-                const Divider(thickness: 2),
+                const Divider(thickness: 1),
                 const SizedBox(height: 5),
                 TextFormField(
                   controller: _feedbackController,
