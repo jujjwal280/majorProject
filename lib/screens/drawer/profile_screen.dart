@@ -40,7 +40,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     'Indusland Bank',
     'Kotak Mahindra Bank',
     'Punjab National Bank',
-    'Punjab Sindh Bank'
+    'Punjab Sindh Bank',
     'State Bank of India',
     'Union Bank of India'
   ];
