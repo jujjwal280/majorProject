@@ -20,6 +20,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _bankName;
   String? _accountNumber;
   int? _age;
+  String? _ifscCode;
+  String? _branchAddress;
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -28,11 +30,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _accountNumberController = TextEditingController();
+  final TextEditingController _ifscCodeController = TextEditingController();
+  final TextEditingController _branchAddressController = TextEditingController();
 
   String? _selectedBank;
   String? _selectedGender;
 
-  List<String> _genderOptions = ['Male', 'Female', 'Other'];
+  final List<String> _genderOptions = ['Male', 'Female', 'Other'];
   final List<String> _bankOptions = [
     'Axis Bank',
     'Bank of Baroda',
@@ -49,7 +53,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // Defer fetching profile to after first frame to safely use context.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchUserProfile();
     });
@@ -84,6 +87,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _bankName = userDoc['bank_name'] ?? '';
             _accountNumber = userDoc['account_number'] ?? '';
             _age = userDoc['age'] ?? 0;
+            _ifscCode = userDoc['ifsc_code'] ?? '';
+            _branchAddress = userDoc['branch_address'] ?? '';
 
             _usernameController.text = _username ?? '';
             _emailController.text = _email ?? '';
@@ -94,6 +99,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _accountNumberController.text = _accountNumber ?? '';
             _selectedGender = _genderOptions.contains(userDoc['sex']) ? userDoc['sex'] : null;
             _selectedBank = _bankOptions.contains(userDoc['bank_name']) ? userDoc['bank_name'] : null;
+            _ifscCodeController.text = _ifscCode ?? 'null';
+            _branchAddressController.text = _branchAddress ?? 'null';
           });
         } else {
           if (kDebugMode) {
@@ -137,6 +144,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           'bank_name': _selectedBank,
           'account_number': _accountNumberController.text,
           'age': int.tryParse(_ageController.text) ?? 0,
+          'ifsc_code': _ifscCodeController.text,
+          'branch_address': _branchAddressController.text,
         });
 
         // Show a success message deferred after frame
@@ -195,167 +204,238 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               if (_username != null) ...[
                 Text('Update your Profile $_username', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 10),
+                const SizedBox(height: 5),
               ],
-              const SizedBox(height: 10),
-              TextField(
-                controller: _usernameController,
-                decoration: InputDecoration(
-                  labelText: 'Username',
-                  filled: true,fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15),
-                    borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
-                  ),
+              const Divider(thickness: 1),
+              ExpansionTile(
+                title: const Text(
+                  'Personal Details :',
+                  style: TextStyle(fontSize: 20),
                 ),
+                children: [
+                  const SizedBox(height: 5),
+                  TextField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      labelText: 'Username',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _phoneNumberController,
+                    decoration: InputDecoration(
+                      labelText: 'Phone Number',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _dobController,
+                    readOnly: true,
+                    onTap: () => _selectDate(context),
+                    decoration: InputDecoration(
+                      labelText: 'Date of Birth (DD/MM/YYYY)',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButtonFormField<String>(
+                    value: _selectedGender,
+                    items: _genderOptions.map((String gender) {
+                      return DropdownMenuItem<String>(
+                        value: gender,
+                        child: Text(gender),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedGender = newValue;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Gender',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _ageController,
+                    decoration: InputDecoration(
+                      labelText: 'Age',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _addressController,
+                    decoration: InputDecoration(
+                      labelText: 'Address',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(
-                  labelText: 'Email',
-                  filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
-                  ),
+              const Divider(thickness: 1),
+              ExpansionTile(
+                title: const Text(
+                  'Bank Details :',
+                  style: TextStyle(fontSize: 20),
                 ),
+                children: [
+                  const SizedBox(height: 5),
+                  DropdownButtonFormField<String>(
+                    value: _selectedBank,
+                    items: _bankOptions.map((String bank) {
+                      return DropdownMenuItem<String>(
+                        value: bank,
+                        child: Text(bank),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        _selectedBank = newValue;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      labelText: 'Bank Name',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _accountNumberController,
+                    decoration: InputDecoration(
+                      labelText: 'Account Number',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _ifscCodeController,
+                    decoration: InputDecoration(
+                      labelText: 'IFSC Code',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _branchAddressController,
+                    decoration: InputDecoration(
+                      labelText: 'Branch Address',
+                      filled: true,
+                      fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                        borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _phoneNumberController,
-                decoration: InputDecoration(
-                  labelText: 'Phone Number',
-                  filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _dobController,
-                readOnly: true,
-                onTap: () => _selectDate(context),
-                decoration: InputDecoration(
-                  labelText: 'Date of Birth (DD/MM/YYYY)',
-                  filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                value: _selectedGender,
-                items: _genderOptions.map((String gender) {
-                  return DropdownMenuItem<String>(
-                    value: gender,
-                    child: Text(gender),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedGender = newValue;
-                  });
-                },
-                decoration: InputDecoration(
-                  labelText: 'Gender',
-                  filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _ageController,
-                decoration: InputDecoration(
-                  labelText: 'Age',
-                  filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _addressController,
-                decoration: InputDecoration(
-                  labelText: 'Address',
-                  filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                value: _selectedBank,
-                items: _bankOptions.map((String bank) {
-                  return DropdownMenuItem<String>(
-                    value: bank,
-                    child: Text(bank),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedBank = newValue;
-                  });
-                },
-                decoration: InputDecoration(
-                  labelText: 'Bank Name',
-                  filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _accountNumberController,
-                decoration: InputDecoration(
-                  labelText: 'Account Number',
-                  filled: true,
-                  fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2,),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: Color(0xFF429EBD), width: 2,),
-                  ),
-                ),
-              ),
+              const Divider(thickness: 1),
               const SizedBox(height: 30),
               Center(
                 child: ElevatedButton(

@@ -444,7 +444,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 60),
                         ElevatedButton(
                           onPressed: _addTransaction,
                           style: ElevatedButton.styleFrom(
@@ -459,6 +459,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             style: TextStyle(fontSize: 18, color: Colors.white),
                           ),
                         ),
+                        const SizedBox(height: 160),
                       ],
                     ),
                   ),

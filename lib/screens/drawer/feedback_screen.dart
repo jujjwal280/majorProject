@@ -78,12 +78,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
-                Text(
-                  'Your thoughts will be shown to Admin',
-                  style: Theme.of(context).textTheme.titleLarge,
-                ),
-                const SizedBox(height: 20),
+                Text('Update your Profile $_username', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                const Divider(thickness: 2),
+                const SizedBox(height: 5),
                 TextFormField(
                   controller: _feedbackController,
                   maxLines: 5,
