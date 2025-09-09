@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:start1/services/sms_service.dart';
 
 class TransactionsScreen extends StatefulWidget {
   final VoidCallback? onTransactionChanged;
@@ -134,6 +135,32 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     return Scaffold(
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                // 1. Create an instance of the correct service class.
+                final smsService = SmsImportService();
+
+                // 2. Call the correct method and pass the context.
+                // The method will show its own snackbars for progress and results.
+                await smsService.getAndProcessSms(context);
+
+                // 3. Call the callback to refresh the home screen dashboard after the sync completes.
+                widget.onTransactionChanged?.call();
+              },
+              icon: const Icon(Icons.sms_rounded),
+              label: const Text('Sync Transactions from SMS'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFF27F0C),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+          ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: transactions.snapshots(),
@@ -481,4 +508,5 @@ final Map<String, Color> categoryColors = {
   'Entertainment': const Color(0xFFF4BAB0),
   'Rent': const Color(0xFFB2967D),
   'Dining Out': const Color(0xFFF47F7D),
+  'Other': const Color(0xFF053F5C)
 };

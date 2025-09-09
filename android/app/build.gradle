@@ -10,9 +10,11 @@ plugins {
 
 android {
     namespace = "com.example.start1"
+
+    // Let Flutter's settings manage the compile SDK version.
+    // The conflicting line 'compileSdkVersion 35' has been removed.
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
-    compileSdkVersion 35
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -20,15 +22,17 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = "1.8"
     }
 
     defaultConfig {
         applicationId "com.example.start1"
-        minSdkVersion 23  // Change this to 23 or higher
-        targetSdkVersion 33
-        versionCode 1 // You can set a specific version code or dynamically manage it
-        versionName "1.0.0" // Set your desired version name here
+        // Your minSdkVersion of 23 is compatible.
+        minSdkVersion 23
+        // The targetSdkVersion should be managed by Flutter to match the compileSdkVersion.
+        targetSdkVersion flutter.targetSdkVersion
+        versionCode 1
+        versionName "1.0.0"
     }
 
     buildTypes {
@@ -42,3 +46,8 @@ android {
 flutter {
     source = "../.."
 }
+
+dependencies {
+    // No changes needed here
+}
+

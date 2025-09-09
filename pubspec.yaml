@@ -5,7 +5,8 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.5.4
+  sdk: '>=3.2.3 <4.0.0' # Updated sdk constraint for compatibility
+
 dependencies:
   flutter:
     sdk: flutter
@@ -26,8 +27,14 @@ dependencies:
   flutter_local_notifications:
   http:
   provider:
-#  tflite_flutter:
-#  tflite_flutter_helper:
+
+  # --- THE FIX ---
+  # Removed the old 'telephony' package
+  # Added the new, modern packages for SMS and permissions
+  flutter_sms_inbox: ^1.0.3
+  permission_handler: ^11.0.1
+  # --- END FIX ---
+
 
 dev_dependencies:
   flutter_test:
@@ -44,3 +51,4 @@ flutter_icons:
   android: true
   ios: true
   image_path: "assets/icons/app_icons.png"
+
