@@ -34,20 +34,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 title: "Know where your money goes",
                 description: "Track your transactions easily with categories and financial reports.",
               ),
-              OnboardingPage(
+              // --- THE FIX ---
+              // The unused parameters have been removed from this constructor call.
+              const OnboardingPage(
                 image: Icons.checklist_rounded,
                 title: "Planning ahead",
                 description: "Setup your budget for each category so you're in control.",
-                showButtons: true,
-                onSignUp: () {
-                  Navigator.pushNamed(context, '/signup');
-                },
-                onLogin: () {
-                  Navigator.pushNamed(context, '/login');
-                },
               ),
+              // --- END FIX ---
             ],
           ),
+          // This Positioned widget correctly handles the buttons for the last page.
           if (_currentPage == 2)
             Positioned(
               bottom: 80,
@@ -117,18 +114,15 @@ class OnboardingPage extends StatelessWidget {
   final IconData image;
   final String title;
   final String description;
-  final VoidCallback? onSignUp;
-  final VoidCallback? onLogin;
-  final bool showButtons;
 
+  // --- THE FIX ---
+  // The unused parameters have been removed from the class definition.
   const OnboardingPage({super.key,
     required this.image,
     required this.title,
     required this.description,
-    this.onSignUp,
-    this.onLogin,
-    this.showButtons = false,
   });
+  // --- END FIX ---
 
   @override
   Widget build(BuildContext context) {
@@ -156,4 +150,3 @@ class OnboardingPage extends StatelessWidget {
     );
   }
 }
-

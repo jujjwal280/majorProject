@@ -22,7 +22,10 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     );
     _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
-    splashServices.checkAuthentication(context);
+
+    Future.delayed(const Duration(seconds: 3), () {
+      splashServices.checkAuthentication(context);
+    });
   }
 
   @override
@@ -48,7 +51,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
                     const Icon(Icons.currency_rupee_rounded, size: 150, color: Color(0xFF053F5C)),
                     const SizedBox(height: 5),
                     TweenAnimationBuilder(
-                      tween: Tween<double>(begin: 0.0, end: 1.0), // Fade-in effect
+                      tween: Tween<double>(begin: 0.0, end: 1.0),
                       duration: const Duration(seconds: 1),
                       builder: (context, double opacity, child) {
                         return const Text(

@@ -2,10 +2,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:provider/provider.dart';
 import 'package:start1/auth/signup_screen.dart';
 import 'package:start1/screens/home_screen.dart';
 import 'package:start1/screens/drawer/profile_screen.dart';
 import 'package:start1/screens/drawer/transactions_screen.dart';
+import 'package:start1/providers/theme_provider.dart';
+import 'package:start1/providers/user_data_provider.dart';
+import 'package:start1/providers/transaction_provider.dart';
+import 'package:start1/providers/prediction_provider.dart';
 import 'package:start1/ui/onboarding_screen.dart';
 import 'package:start1/ui/splash_screen.dart';
 import 'package:start1/auth/login_screen.dart';
@@ -31,59 +36,59 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await NotificationService.initialize();
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => UserDataProvider()),
+        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(create: (_) => PredictionProvider()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  bool _isDarkMode = false;
-
-  void _toggleThemeMode() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF053F5C),
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF429EBD),
-          brightness: Brightness.dark,
-        ),
-        useMaterial3: true,
-    ),
-      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreen(),
-        '/onboard': (context) => const OnboardingScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/signup': (context) => const SignupScreen(),
-        '/home': (context) => HomeScreen(isDarkMode: _isDarkMode, onThemeToggle: _toggleThemeMode,),
-        '/insight': (context) => const FutureInsightScreen(predictedExpense: null, nextMonth: '',),
-        '/notify': (context) => NotificationScreen(),
-        '/transactions': (context) => const TransactionsScreen(),
-        '/profile': (context) => const ProfileScreen(),
-        '/feedback': (context) => const FeedbackScreen(),
-        '/admin': (context) => const AdminScreen(),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'MoneyMinder',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF053F5C),
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF429EBD),
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+          themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const SplashScreen(),
+            '/onboard': (context) => const OnboardingScreen(),
+            '/login': (context) => const LoginScreen(),
+            '/signup': (context) => const SignupScreen(),
+            '/home': (context) => const HomeScreen(),
+            '/insight': (context) => const FutureInsightScreen(),
+            '/notify': (context) => NotificationScreen(),
+            '/transactions': (context) => const TransactionsScreen(),
+            '/profile': (context) => const ProfileScreen(),
+            '/feedback': (context) => const FeedbackScreen(),
+            '/admin': (context) => const AdminScreen(),
+          },
+        );
       },
     );
   }
 }
-

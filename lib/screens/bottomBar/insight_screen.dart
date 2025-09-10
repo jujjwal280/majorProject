@@ -1,235 +1,145 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async'; // Import for TimeoutException
+import 'dart:io'; // Import for SocketException
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:start1/providers/prediction_provider.dart';
 
 class FutureInsightScreen extends StatefulWidget {
-  final String? username;
-  final double? predictedExpense;
-  final String? nextMonth;
-
-  const FutureInsightScreen({
-    super.key,
-    this.username,
-    required this.predictedExpense,
-    required this.nextMonth,
-  });
+  const FutureInsightScreen({super.key});
 
   @override
   State<FutureInsightScreen> createState() => _FutureInsightScreenState();
 }
 
 class _FutureInsightScreenState extends State<FutureInsightScreen> {
-  double? predictedExpense;
-  String? nextMonth;
   bool _isLoading = false;
 
-  @override
-  void initState() {
-    super.initState();
-    predictedExpense = widget.predictedExpense;
-    nextMonth = widget.nextMonth;
-    loadPredictedExpense();
-  }
-
-  Future<void> loadPredictedExpense() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    double? storedExpense = prefs.getDouble('predictedExpense');
-    if (storedExpense != null) {
-      setState(() {
-        predictedExpense = storedExpense;
-      });
-    }
-  }
-
-  Future<void> triggerPredictionAPI() async {
-    setState(() {
-      _isLoading = true;
-    });
+  Future<void> _triggerPredictionAPI() async {
+    setState(() { _isLoading = true; });
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
-      if (kDebugMode) {
-        showSnackbar("❌ No user logged in.");
-      }
-      setState(() {
-        _isLoading = false;
-      });
+      _showSnackbar("❌ No user logged in.");
+      setState(() { _isLoading = false; });
       return;
     }
 
-    final url = Uri.parse(
-      'https://ae60f539-d299-4b88-af7e-d19af12b951d-00-3b1kce09qe2qk.sisko.replit.dev/predict',
-    );
-
     try {
+      final idToken = await user.getIdToken();
+
+      // The URL now correctly points to the /predict endpoint.
+      final url = Uri.parse('https://ec7e20d3-e5ba-40e2-845e-187b9f5b8daf-00-eorlqbv9c1kw.sisko.replit.dev/predict');
+
+
       final response = await http.post(
         url,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': 'Bearer $idToken',
         },
-        body: jsonEncode({'uid': user.uid}),
-      );
+        body: jsonEncode({}),
+      ).timeout(const Duration(seconds: 45)); // Increased timeout for ML model
 
       if (response.statusCode == 200) {
-        final doc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .collection('prediction')
-            .doc('next_month')
-            .get();
+        // --- THE FIX ---
+        // 1. Parse the JSON response from the API.
+        final responseData = jsonDecode(response.body);
+        final dynamic newPrediction = responseData['predicted_expense'];
 
-        if (doc.exists) {
-          final data = doc.data()!;
-          final newPredictedExpense = data['predicted_expense']?.toDouble();
-          setState(() {
-            predictedExpense = newPredictedExpense;
-          });
+        // 2. Convert the new prediction to a double, allowing for null.
+        final double? newPredictionValue = (newPrediction as num?)?.toDouble();
 
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          prefs.setDouble('predictedExpense', predictedExpense ?? 0.0);
+        // 3. Update the provider directly with the new value from the API.
+        // This avoids the race condition of re-fetching from Firestore.
+        if (mounted) {
+          Provider.of<PredictionProvider>(context, listen: false)
+              .updatePrediction(newPredictionValue);
         }
+        _showSnackbar("✅ Prediction updated successfully!");
+        // --- END FIX ---
+
       } else {
-        if (kDebugMode) {
-          showSnackbar("❌ Prediction API failed: ${response.body}");
-        }
+        _showSnackbar("❌ API Error ${response.statusCode}: ${response.body}");
       }
+    } on TimeoutException {
+      _showSnackbar("🔥 Network Error: The request timed out. The server might be busy or asleep.");
+    } on SocketException {
+      _showSnackbar("🔥 Network Error: Could not connect to the server. Check your internet connection.");
     } catch (e) {
-      if (kDebugMode) {
-        showSnackbar("🔥 Error calling prediction API: $e");
-      }
+      _showSnackbar("🔥 An unexpected error occurred: $e");
     }
 
-    setState(() {
-      _isLoading = false;
-    });
+    setState(() { _isLoading = false; });
   }
 
-  void showSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+  void _showSnackbar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final predictionProvider = Provider.of<PredictionProvider>(context);
+    final nextMonth = DateFormat('MMMM').format(DateTime(DateTime.now().year, DateTime.now().month + 1));
+    final predictedExpense = predictionProvider.predictedExpense;
+
     return Scaffold(
       body: RefreshIndicator(
         color: const Color(0xFF053F5C),
-        onRefresh: triggerPredictionAPI,
+        onRefresh: _triggerPredictionAPI,
         child: ListView(
-          padding: const EdgeInsets.all(10.0),
+          padding: const EdgeInsets.all(16.0),
           children: [
-            const SizedBox(height: 5),
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 10),
-              child: Text(
-                'Predicted Value!',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            const Text(
+              'Future Insight',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 10),
             Card(
               elevation: 8,
-              color: const Color(0xFFF5F5F5),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   children: [
-                    SizedBox(
-                      height: 30,
-                      child: Text(
-                        "$nextMonth's Expenditure",
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF053F5C),
-                        ),
-                      ),
+                    Text(
+                      "$nextMonth's Predicted Expenditure",
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF053F5C)),
                     ),
-                    const SizedBox(height: 5),
-                    predictedExpense != null
-                        ? Text(
-                      "₹${predictedExpense!.toStringAsFixed(2)}",
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red[900],
+                    const SizedBox(height: 15),
+                    if (_isLoading)
+                      const CircularProgressIndicator()
+                    else if (predictedExpense != null)
+                      Text(
+                        "₹${predictedExpense.toStringAsFixed(2)}",
+                        style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.red[900]),
+                      )
+                    else
+                      Text(
+                        "Not enough data to predict 💤",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500, color: Colors.grey[700]),
                       ),
-                    )
-                        : Text(
-                      "Not enough data to predict 💤",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.red[900],
-                      ),
-                    ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            Center(
+            const SizedBox(height: 40),
+            const Center(
               child: Text(
-                "Push down to refresh",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red[900],
-                ),
+                "Pull down to refresh the prediction.",
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ),
-            const SizedBox(height: 450),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Text(
-                "📝 To get your predicted expense, make sure you’ve added transactions for at least 2 months.",
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[700],
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            // Column(
-            //   children: widget.categoryExpenses.entries.map((entry) {
-            //     return Card(
-            //       color: categoryColors[entry.key] ?? Colors.grey,
-            //       elevation: 4,
-            //       margin: const EdgeInsets.symmetric(vertical: 8),
-            //       child: ListTile(
-            //         leading: const Icon(Icons.shopping_cart_rounded, color: Color(0xFF053F5C)),
-            //         title: Text(
-            //           entry.key,
-            //           style: const TextStyle(
-            //             fontSize: 18,
-            //             fontWeight: FontWeight.bold,
-            //             color: Color(0xFF053F5C),
-            //           ),
-            //         ),
-            //         trailing: Text(
-            //           "₹${entry.value.toStringAsFixed(2)}",
-            //           style: const TextStyle(
-            //             fontSize: 15,
-            //             fontWeight: FontWeight.bold,
-            //             color: Colors.black,
-            //           ),
-            //         ),
-            //       ),
-            //     );
-            //   }).toList(),
-            // )
           ],
         ),
       ),
     );
   }
 }
+

@@ -4,22 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flip_card/flip_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
+import 'package:start1/main.dart';
 import 'package:start1/screens/drawer/profile_screen.dart';
 import 'package:start1/screens/drawer/transactions_screen.dart';
+import '../providers/theme_provider.dart';
 import 'bottomBar/insight_screen.dart';
 import 'bottomBar/notification_screen.dart';
 import 'drawer/admin_screen.dart';
 import 'drawer/feedback_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final bool isDarkMode;
-  final VoidCallback onThemeToggle;
-
-  const HomeScreen({
-    super.key,
-    required this.isDarkMode,
-    required this.onThemeToggle,
-  });
+  const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -114,36 +110,39 @@ class _HomeScreenState extends State<HomeScreen> {
           .collection('transactions');
 
       try {
-        final QuerySnapshot snapshot = await transactions.get();
+        DateTime now = DateTime.now();
+        // First day of the current month
+        DateTime startOfMonth = DateTime(now.year, now.month, 1);
+        // First day of the next month
+        DateTime endOfMonth = DateTime(now.year, now.month + 1, 1);
+
+        // 🔥 Optimized Firestore query: only fetch this month’s documents
+        final QuerySnapshot snapshot = await transactions
+            .where('date', isGreaterThanOrEqualTo: startOfMonth)
+            .where('date', isLessThan: endOfMonth)
+            .get();
+
         final dataDocs = snapshot.docs;
 
         Map<String, double> tempCategoryExpenses = {};
         double total = 0;
 
-        DateTime now = DateTime.now();
-        int currentMonth = now.month;
-        int currentYear = now.year;
-
         for (var doc in dataDocs) {
           final data = doc.data() as Map<String, dynamic>;
 
-          if (data['amount'] != null && data['category'] != null && data['date'] != null) {
+          if (data['amount'] != null && data['category'] != null) {
             final category = data['category'];
-            final amount = data['amount'].toDouble();
-            final Timestamp timestamp = data['date'];
-            DateTime transactionDate = timestamp.toDate();
+            final amount = (data['amount'] as num).toDouble();
 
-            if (transactionDate.month == currentMonth && transactionDate.year == currentYear) {
-              total += amount;
-              tempCategoryExpenses.update(category, (value) => value + amount, ifAbsent: () => amount);
-            }
+            total += amount;
+            tempCategoryExpenses.update(category, (value) => value + amount, ifAbsent: () => amount);
           }
         }
 
         setState(() {
           monthExpenses = total;
           categoryExpenses = tempCategoryExpenses;
-          currentMonth = _getCurrentMonth() as int;
+          currentMonth = _getCurrentMonth();
         });
       } catch (e) {
         if (kDebugMode) {
@@ -187,13 +186,13 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       isLogout = true;
     });
-    widget.onThemeToggle;
+    // --- FIX #3: Removed the old widget.onThemeToggle line ---
     await Future.delayed(const Duration(seconds: 1));
     await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacementNamed(context, '/login');
-    setState(() {
-      isLogout = false;
-    });
+    // Ensure the context is still valid before navigating
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
   }
 
   void _onDrawerTap(int index) {
@@ -214,11 +213,7 @@ class _HomeScreenState extends State<HomeScreen> {
           currentMonth: currentMonth,
         );
       case 1:
-        return FutureInsightScreen(
-          username: _username,
-          predictedExpense: predictedExpense,
-          nextMonth: nextMonth,
-        );
+        return FutureInsightScreen();
       case 2:
         return NotificationScreen();
       case 3:
@@ -265,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
         appBar: AppBar(
           title: Text(
@@ -282,68 +278,42 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           actions: [
+            // This is the LOGOUT button
             IconButton(
-              icon: Icon(
-                Icons.logout,
-                size: 28,
-                color: widget.isDarkMode ? Colors.white : Colors.black,
-              ),
+              icon: const Icon(Icons.logout, size: 28, color: Colors.white),
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (context) => AlertDialog(
-                    title: const Text(
-                      'Are you sure you want to log out?',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    title: const Text('Are you sure you want to log out?', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.black,
-                          ),
-                        ),
+                        child: const Text('Cancel', style: TextStyle(fontSize: 18, color: Colors.black)),
                       ),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
                           backgroundColor: const Color(0xFF053F5C),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         ),
                         onPressed: _logout,
                         child: isLogout
-                            ? const Padding(
-                          padding: EdgeInsets.only(left: 10),
-                          child: CircularProgressIndicator(color: Color(0xFF053F5C)),
-                        )
-                            : const Text(
-                          '  LogOut   ',
-                          style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                          ),
-                        ),
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text('LogOut', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
                       ),
                     ],
                   ),
                 );
               },
             ),
+            // This is the THEME TOGGLE button
             IconButton(
               icon: Icon(
-                widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                color: widget.isDarkMode ? Colors.white : Colors.black,
+                themeProvider.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                color: Colors.white,
               ),
-              onPressed: widget.onThemeToggle,
+              // --- FIX #2: Corrected the onPressed syntax ---
+              onPressed: () => themeProvider.toggleTheme(),
             ),
           ],
         ),
@@ -407,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 leading: const Icon(Icons.dashboard_rounded, color: Color(0xFF053F5C)),
                 title: Text(
                   'Dashboard',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black,),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
                 ),
                 selected: _selectedIndex == 0,
                 selectedTileColor: const Color(0xFFF27F0C),
@@ -418,7 +388,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 leading: const Icon(Icons.payment_rounded, color: Color(0xFF053F5C)),
                 title: Text(
                   'Transactions',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black,),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
                 ),
                 selected: _selectedIndex == 3,
                 selectedTileColor: const Color(0xFFF27F0C),
@@ -429,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 leading: const Icon(Icons.person, color: Color(0xFF053F5C)),
                 title: Text(
                   'Profile',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black,),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
                 ),
                 selected: _selectedIndex == 4,
                 selectedTileColor: const Color(0xFFF27F0C),
@@ -440,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 leading: const Icon(Icons.feedback_rounded, color: Color(0xFF053F5C)),
                 title: Text(
                   'Feedback',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: widget.isDarkMode ? Colors.white : Colors.black,),
+                  style: TextStyle(fontWeight: FontWeight.bold, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
                 ),
                 selected: _selectedIndex == 5,
                 selectedTileColor: const Color(0xFFF27F0C),
@@ -452,10 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   leading: const Icon(Icons.admin_panel_settings_rounded, color: Color(0xFF053F5C)),
                   title: Text(
                     'Admin',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: widget.isDarkMode ? Colors.white : Colors.black,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: themeProvider.isDarkMode ? Colors.white : Colors.black),
                   ),
                   selected: _selectedIndex == 6,
                   selectedTileColor: const Color(0xFFF27F0C),
