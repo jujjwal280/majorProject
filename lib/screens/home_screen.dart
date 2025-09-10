@@ -503,7 +503,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(10.0),
+      padding: const EdgeInsets.all(16.0),
       child: ListView(
         children: [
           if (widget.username != null)
@@ -519,7 +519,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           Card(
             elevation: 8,
-            color: const Color(0xFFF5F5F5),
+            color: Colors.white.withAlpha(230),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -535,11 +535,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 15),
                   Text(
                     "₹${widget.monthExpenses.toStringAsFixed(2)}",
                     style: TextStyle(
-                      fontSize: 30,
+                      fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Colors.red[900],
                     ),

@@ -20,6 +20,7 @@ import 'screens/bottomBar/insight_screen.dart';
 import 'screens/bottomBar/notification_screen.dart';
 import 'screens/drawer/admin_screen.dart';
 import 'screens/drawer/feedback_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -30,6 +31,11 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // --- Load Theme Preference ---
+  final prefs = await SharedPreferences.getInstance();
+  final isDarkMode = prefs.getBool('isDarkMode') ?? false; // Default to false (light mode) if not set
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -39,7 +45,8 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        // Pass the loaded initial value to your ThemeProvider
+        ChangeNotifierProvider(create: (_) => ThemeProvider(isDarkMode)),
         ChangeNotifierProvider(create: (_) => UserDataProvider()),
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
         ChangeNotifierProvider(create: (_) => PredictionProvider()),

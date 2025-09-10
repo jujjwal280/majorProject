@@ -97,13 +97,15 @@ class _FutureInsightScreenState extends State<FutureInsightScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16.0),
           children: [
+            const SizedBox(height: 15),
             const Text(
-              'Future Insight',
+              'Predicted Value',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             Card(
               elevation: 8,
+              color: Colors.white.withAlpha(230),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(

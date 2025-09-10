@@ -448,7 +448,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
                 final sortedMonths = groupedTransactions.keys.toList();
                 return ListView(
-                  padding: const EdgeInsets.all(12.0),
+                  padding: const EdgeInsets.all(16.0),
                   children: [
                     // 1. Overall Expenditure Card (Stays the Same)
                     Card(
@@ -461,16 +461,16 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             Text(
                               "$_selectedYear Overall Expenditure",
                               style: const TextStyle(
-                                fontSize: 21,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                                 color: Color(0xFF053F5C),
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 15),
                             Text(
                               "₹${totalExpenditure.toStringAsFixed(2)}",
                               style: TextStyle(
-                                fontSize: 26,
+                                fontSize: 32,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.red[900],
                               ),
