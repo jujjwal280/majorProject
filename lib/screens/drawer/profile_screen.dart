@@ -1,8 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // For better date formatting
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../providers/theme_provider.dart';
+
+// Brand Constants
+const Color primaryDark = Color(0xFF053F5C);
+const Color accentOrange = Color(0xFFF27F0C);
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -12,10 +18,9 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // A key to identify and validate the form
   final _formKey = GlobalKey<FormState>();
 
-  // Controllers to manage the text in each form field
+  // Controllers
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneNumberController = TextEditingController();
@@ -26,32 +31,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _ifscCodeController = TextEditingController();
   final _branchAddressController = TextEditingController();
 
-  // Variables to hold the selected values from dropdowns
   String? _selectedGender;
   String? _selectedBank;
 
-  // Options for the dropdown menus
   final List<String> _genderOptions = ['Male', 'Female', 'Other'];
   final List<String> _bankOptions = [
     'Axis Bank', 'Bank of Baroda', 'HDFC Bank', 'ICICI Bank', 'Indusland Bank',
     'Kotak Mahindra Bank', 'Punjab National Bank', 'State Bank of India', 'Union Bank of India'
   ];
 
-  // State flags to manage the UI based on data loading/saving
   bool _isLoading = true;
-  bool _hasError = false;
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    // Fetch user data as soon as the widget is initialized
     _fetchUserProfile();
   }
 
   @override
   void dispose() {
-    // Clean up controllers to free up resources when the widget is removed
     _usernameController.dispose();
     _emailController.dispose();
     _phoneNumberController.dispose();
@@ -64,125 +63,81 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
-  /// Fetches user profile data from Firestore and updates the UI.
   Future<void> _fetchUserProfile() async {
-    // Ensure the widget is still in the tree before updating state
     if (!mounted) return;
-
-    setState(() {
-      _isLoading = true;
-      _hasError = false;
-    });
+    setState(() => _isLoading = true);
 
     final User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      _showSnackbar("No user is signed in.", isError: true);
-      setState(() {
-        _isLoading = false;
-        _hasError = true;
-      });
-      return;
-    }
+    if (user == null) return;
 
     try {
       final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
 
       if (doc.exists && mounted) {
         final data = doc.data()!;
-        // Populate controllers and state variables with fetched data
-        _usernameController.text = data['username'] ?? '';
-        _emailController.text = user.email ?? '';
-        _phoneNumberController.text = data['phone_number'] ?? '';
-        _dobController.text = data['dob'] ?? '';
-        _addressController.text = data['address'] ?? '';
-        _ageController.text = (data['age'] ?? 0).toString();
-        _accountNumberController.text = data['account_number'] ?? '';
-        _ifscCodeController.text = data['ifsc_code'] ?? '';
-        _branchAddressController.text = data['branch_address'] ?? '';
-
-        // Safely set dropdown values
-        _selectedGender = _genderOptions.contains(data['sex']) ? data['sex'] : null;
-        _selectedBank = _bankOptions.contains(data['bank_name']) ? data['bank_name'] : null;
-
+        setState(() {
+          _usernameController.text = data['username'] ?? '';
+          _emailController.text = user.email ?? '';
+          _phoneNumberController.text = data['phone_number'] ?? '';
+          _dobController.text = data['dob'] ?? '';
+          _addressController.text = data['address'] ?? '';
+          _ageController.text = (data['age'] ?? '').toString();
+          _accountNumberController.text = data['account_number'] ?? '';
+          _ifscCodeController.text = data['ifsc_code'] ?? '';
+          _branchAddressController.text = data['branch_address'] ?? '';
+          _selectedGender = _genderOptions.contains(data['sex']) ? data['sex'] : null;
+          _selectedBank = _bankOptions.contains(data['bank_name']) ? data['bank_name'] : null;
+        });
       }
     } catch (e) {
-      _showSnackbar("Failed to load profile data.", isError: true);
-      _hasError = true;
+      _showStatusSnackbar("Vault sync failed.", isError: true);
     } finally {
-      // Ensure loading is turned off regardless of success or failure
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
-  /// Validates the form and updates the user profile in Firestore.
   void _updateUserProfile() async {
-    final User? user = FirebaseAuth.instance.currentUser;
+    if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isSaving = true);
+    HapticFeedback.mediumImpact();
+
+    final User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       try {
         await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-          'username': _usernameController.text,
-          'email': _emailController.text,
-          'phone_number': _phoneNumberController.text,
+          'username': _usernameController.text.trim(),
+          'phone_number': _phoneNumberController.text.trim(),
           'dob': _dobController.text,
           'sex': _selectedGender,
-          'address': _addressController.text,
+          'address': _addressController.text.trim(),
           'bank_name': _selectedBank,
-          'account_number': _accountNumberController.text,
+          'account_number': _accountNumberController.text.trim(),
           'age': int.tryParse(_ageController.text) ?? 0,
-          'ifsc_code': _ifscCodeController.text,
-          'branch_address': _branchAddressController.text,
+          'ifsc_code': _ifscCodeController.text.trim(),
+          'branch_address': _branchAddressController.text.trim(),
         });
 
-        // Show a success message deferred after frame
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Profile updated successfully")),
-          );
+        _showStatusSnackbar("Identity secured successfully!");
+        Future.delayed(const Duration(seconds: 1), () {
+          if (mounted) Navigator.pushReplacementNamed(context, '/home');
         });
       } catch (e) {
-        if (kDebugMode) {
-          _showSnackbar("Error updating user profile: $e");
-        }
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("Failed to update profile")),
-          );
-        });
+        _showStatusSnackbar("Vault update failed.", isError: true);
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
       }
     }
-
-    // Also delay navigation after frame so context is safe
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.pushReplacementNamed(context, '/home');
-    });
   }
 
-  /// Displays a date picker and updates the date of birth field.
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        // Format the date to a more readable string
-        _dobController.text = DateFormat('yyyy-MM-dd').format(picked);
-      });
-    }
-  }
-
-  /// Helper to show a SnackBar with a message.
-  void _showSnackbar(String message, {bool isError = false}) {
+  void _showStatusSnackbar(String message, {bool isError = false}) {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
-          backgroundColor: isError ? Colors.redAccent : Colors.green,
+          content: Text(message, style: const TextStyle(fontWeight: FontWeight.bold)),
+          backgroundColor: isError ? primaryDark : const Color(0xFF11698E),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       );
     }
@@ -190,153 +145,206 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final tp = Provider.of<ThemeProvider>(context);
+
     return Scaffold(
+      backgroundColor: Colors.transparent, // Fix: Inherits dark/light bg from Home
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _hasError
-          ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text('Failed to load profile.', style: TextStyle(fontSize: 18)),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: _fetchUserProfile,
-              child: const Text('Retry'),
-            )
-          ],
-        ),
-      )
-          : _buildProfileForm(),
+          ? const Center(child: CircularProgressIndicator(color: accentOrange))
+          : _buildProfileContent(tp),
     );
   }
 
-  /// Builds the main form widget with all the input fields.
-  Widget _buildProfileForm() {
+  Widget _buildProfileContent(ThemeProvider tp) {
     return Form(
       key: _formKey,
       child: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        physics: const BouncingScrollPhysics(),
         children: [
-          // --- HEADER SECTION ---
-          Center(
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 50,
-                  backgroundColor: const Color(0xFF9FE7F5).withOpacity(0.5),
-                  child: const Icon(Icons.person, size: 50, color: Color(0xFF1E5C78)),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  _usernameController.text.isNotEmpty ? _usernameController.text : "User Profile",
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  _emailController.text,
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // --- PERSONAL DETAILS CARD ---
-          _buildSectionCard(
-            title: 'Personal Details',
-            icon: Icons.person_outline,
-            children: [
-              TextFormField(controller: _usernameController, decoration: _buildInputDecoration(labelText: 'Username'), validator: (v) => v!.isEmpty ? 'Username cannot be empty' : null),
-              const SizedBox(height: 12),
-              TextFormField(controller: _emailController, readOnly: true, decoration: _buildInputDecoration(labelText: 'Email')),
-              const SizedBox(height: 12),
-              TextFormField(controller: _phoneNumberController, keyboardType: TextInputType.phone, decoration: _buildInputDecoration(labelText: 'Phone Number')),
-              const SizedBox(height: 12),
-              TextFormField(controller: _dobController, readOnly: true, onTap: () => _selectDate(context), decoration: _buildInputDecoration(labelText: 'Date of Birth')),
-              const SizedBox(height: 12),
-              DropdownButtonFormField<String>(value: _selectedGender, items: _genderOptions.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(), onChanged: (v) => setState(() => _selectedGender = v), decoration: _buildInputDecoration(labelText: 'Gender')),
-              const SizedBox(height: 12),
-              TextFormField(controller: _ageController, keyboardType: TextInputType.number, decoration: _buildInputDecoration(labelText: 'Age')),
-              const SizedBox(height: 12),
-              TextFormField(controller: _addressController, decoration: _buildInputDecoration(labelText: 'Address')),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // --- BANK DETAILS CARD ---
-          _buildSectionCard(
-            title: 'Bank Details',
-            icon: Icons.account_balance,
-            children: [
-              DropdownButtonFormField<String>(value: _selectedBank, items: _bankOptions.map((b) => DropdownMenuItem(value: b, child: Text(b))).toList(), onChanged: (v) => setState(() => _selectedBank = v), decoration: _buildInputDecoration(labelText: 'Bank Name')),
-              const SizedBox(height: 12),
-              TextFormField(controller: _accountNumberController, keyboardType: TextInputType.number, decoration: _buildInputDecoration(labelText: 'Account Number')),
-              const SizedBox(height: 12),
-              TextFormField(controller: _ifscCodeController, decoration: _buildInputDecoration(labelText: 'IFSC Code')),
-              const SizedBox(height: 12),
-              TextFormField(controller: _branchAddressController, decoration: _buildInputDecoration(labelText: 'Branch Address')),
-            ],
-          ),
+          const SizedBox(height: 10),
+          _buildHeader(tp),
           const SizedBox(height: 30),
 
-          // --- SAVE BUTTON ---
-          ElevatedButton(
-            onPressed: _isSaving ? null : _updateUserProfile,
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              backgroundColor: const Color(0xFF053F5C),
-            ),
-            child: _isSaving
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                : const Text('Save Profile', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-          ),
+          // CLICKABLE AVATAR
+          _buildClickableAvatar(tp),
+          const SizedBox(height: 40),
+
+          // PERSONAL DETAILS
+          _buildSectionLabel(tp, "Personal Identity"),
+          _buildVaultCard(tp, [
+            _buildTextField(tp, _usernameController, "Username", Icons.person_outline),
+            _buildTextField(tp, _emailController, "Vault Email", Icons.alternate_email, enabled: false),
+            _buildTextField(tp, _phoneNumberController, "Phone Number", Icons.phone_android_rounded, type: TextInputType.phone),
+            _buildTextField(tp, _dobController, "Date of Birth", Icons.calendar_today_rounded, readOnly: true, onTap: () => _selectDate(context)),
+            _buildDropdown(tp, "Gender", Icons.face_rounded, _genderOptions, _selectedGender, (v) => setState(() => _selectedGender = v)),
+            _buildTextField(tp, _ageController, "Age", Icons.cake_outlined, type: TextInputType.number),
+            _buildTextField(tp, _addressController, "Residential Address", Icons.location_on_outlined),
+          ]),
+
+          const SizedBox(height: 30),
+
+          // FINANCIAL VAULT
+          _buildSectionLabel(tp, "Bank Connection"),
+          _buildVaultCard(tp, [
+            _buildDropdown(tp, "Primary Bank", Icons.account_balance_rounded, _bankOptions, _selectedBank, (v) => setState(() => _selectedBank = v)),
+            _buildTextField(tp, _accountNumberController, "Account Number", Icons.numbers_rounded, type: TextInputType.number),
+            _buildTextField(tp, _ifscCodeController, "IFSC Code", Icons.qr_code_rounded),
+            _buildTextField(tp, _branchAddressController, "Branch Details", Icons.map_rounded),
+          ]),
+
+          const SizedBox(height: 40),
+
+          _buildSaveButton(),
+          const SizedBox(height: 50),
         ],
       ),
     );
   }
 
-  /// Helper method for consistent section styling
-  Widget _buildSectionCard({required String title, required IconData icon, required List<Widget> children}) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildHeader(ThemeProvider tp) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
           children: [
-            Row(
-              children: [
-                Icon(icon, color: const Color(0xFF053F5C)),
-                const SizedBox(width: 10),
-                Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
+            Icon(Icons.security_rounded, color: accentOrange, size: 16),
+            SizedBox(width: 8),
+            Text("VAULT ACCESS", style: TextStyle(color: accentOrange, fontWeight: FontWeight.bold, letterSpacing: 2, fontSize: 10)),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text("Edit Identity", style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: tp.textColor)),
+      ],
+    );
+  }
+
+  Widget _buildClickableAvatar(ThemeProvider tp) {
+    return Center(
+      child: InkWell(
+        onTap: () => _showStatusSnackbar("Upload feature coming soon!"),
+        borderRadius: BorderRadius.circular(60),
+        child: Stack(
+          alignment: Alignment.bottomRight,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: accentOrange, width: 2)),
+              child: CircleAvatar(
+                radius: 55,
+                backgroundColor: primaryDark,
+                child: Text(
+                  _usernameController.text.isNotEmpty ? _usernameController.text[0].toUpperCase() : "?",
+                  style: const TextStyle(fontSize: 40, color: Colors.white, fontWeight: FontWeight.w900),
+                ),
+              ),
             ),
-            const Divider(height: 20, thickness: 1),
-            ...children,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(color: accentOrange, shape: BoxShape.circle),
+              child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 20),
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// Helper method for consistent InputDecoration styling
-  InputDecoration _buildInputDecoration({required String labelText}) {
-    return InputDecoration(
-    labelText: labelText,
-    filled: true,
-    fillColor: const Color(0xFF9FE7F5).withAlpha((0.2 * 255).toInt()),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-    focusedBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(15),
-    borderSide: const BorderSide(color: Color(0xFF1E5C78), width: 2),),
-    enabledBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(15),
-    borderSide: const BorderSide(color: Color(0xFF429EBD), width: 1.5),),
-    border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(15),
-    ),
+  Widget _buildVaultCard(ThemeProvider tp, List<Widget> children) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: tp.cardColor,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(tp.isDarkMode ? 0.2 : 0.04), blurRadius: 20, offset: const Offset(0, 10))],
+      ),
+      child: Column(children: children),
     );
+  }
+
+  Widget _buildSectionLabel(ThemeProvider tp, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 10, bottom: 15),
+      child: Text(title.toUpperCase(), style: TextStyle(color: tp.subTextColor, fontWeight: FontWeight.w900, fontSize: 11, letterSpacing: 1.5)),
+    );
+  }
+
+  Widget _buildTextField(ThemeProvider tp, TextEditingController ctrl, String label, IconData icon, {bool enabled = true, bool readOnly = false, VoidCallback? onTap, TextInputType type = TextInputType.text}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: TextFormField(
+        controller: ctrl,
+        enabled: enabled,
+        readOnly: readOnly,
+        onTap: onTap,
+        keyboardType: type,
+        style: TextStyle(fontWeight: FontWeight.bold, color: tp.textColor),
+        decoration: _inputDecor(tp, label, icon),
+        validator: (v) => (v == null || v.isEmpty) ? "Required" : null,
+      ),
+    );
+  }
+
+  Widget _buildDropdown(ThemeProvider tp, String label, IconData icon, List<String> options, String? value, Function(String?) onChanged) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
+      child: DropdownButtonFormField<String>(
+        dropdownColor: tp.cardColor,
+        value: value,
+        items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: TextStyle(color: tp.textColor)))).toList(),
+        onChanged: onChanged,
+        style: TextStyle(fontWeight: FontWeight.bold, color: tp.textColor),
+        decoration: _inputDecor(tp, label, icon),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecor(ThemeProvider tp, String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: tp.subTextColor.withOpacity(0.5), fontSize: 12),
+      prefixIcon: Icon(icon, color: tp.isDarkMode ? accentOrange : primaryDark, size: 20),
+      filled: true,
+      fillColor: tp.isDarkMode ? Colors.white.withOpacity(0.03) : const Color(0xFFF8FEFF),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: const BorderSide(color: accentOrange, width: 1.5)),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return Container(
+      width: double.infinity,
+      height: 60,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(colors: [primaryDark, Color(0xFF1E5C78)]),
+        boxShadow: [BoxShadow(color: primaryDark.withOpacity(0.3), blurRadius: 10, offset: const Offset(0, 5))],
+      ),
+      child: ElevatedButton(
+        onPressed: _isSaving ? null : _updateUserProfile,
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20))),
+        child: _isSaving
+            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : const Text("SAVE SECURE DATA", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
+      ),
+    );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2000),
+      firstDate: DateTime(1940),
+      lastDate: DateTime.now(),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.light(primary: primaryDark, onPrimary: Colors.white, onSurface: primaryDark),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) {
+      setState(() => _dobController.text = DateFormat('yyyy-MM-dd').format(picked));
+    }
   }
 }

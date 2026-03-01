@@ -1,21 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../providers/theme_provider.dart';
 
-// A simple data model class to represent a notification.
-// This makes the code cleaner and safer than using raw Maps.
+// Unified Brand Constants
+const Color primaryDark = Color(0xFF053F5C);
+const Color accentOrange = Color(0xFFF27F0C);
+
+// 1. DATA MODEL (Fixed: "Type not found" error)
 class AppNotification {
   final String message;
   final String url;
+  final Timestamp? createdAt;
 
-  AppNotification({required this.message, required this.url});
+  AppNotification({required this.message, required this.url, this.createdAt});
 
-  // A factory constructor to create an AppNotification from a Firestore document.
   factory AppNotification.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     return AppNotification(
       message: data['message'] ?? 'No message content',
       url: data['url'] ?? '',
+      createdAt: data['createdAt'] as Timestamp?,
     );
   }
 }
@@ -28,35 +35,28 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  // A state variable to hold the list of notifications fetched from Firestore.
   List<AppNotification> _notifications = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Fetch the notifications when the screen is first loaded.
     _fetchNotifications();
   }
 
-  /// Fetches notification documents from the top-level 'notifications' collection in Firestore.
+  // 2. FETCH LOGIC (Fixed: "Method not defined" error)
   Future<void> _fetchNotifications() async {
-    // Set loading to true when refetching data
     if (!mounted) return;
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('notifications')
-          .orderBy('createdAt', descending: true) // Show newest notifications first
+          .orderBy('createdAt', descending: true)
           .get();
 
-      // Convert the Firestore documents into a list of AppNotification objects.
       final notifications = snapshot.docs.map((doc) => AppNotification.fromFirestore(doc)).toList();
 
-      // Update the state to rebuild the UI with the new data.
       if (mounted) {
         setState(() {
           _notifications = notifications;
@@ -64,102 +64,168 @@ class _NotificationScreenState extends State<NotificationScreen> {
         });
       }
     } catch (e) {
-      print("Error fetching notifications: $e");
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        _showSnackbar("Failed to load notifications.");
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
+  // 3. URL LOGIC (Fixed: "Method not defined" error)
   void _launchURL(String url) async {
-    if (url.isEmpty) {
-      _showSnackbar("No link available.");
-      return;
-    }
+    HapticFeedback.lightImpact();
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      _showSnackbar("Could not open the link.");
-    }
-  }
-
-  void _showSnackbar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Show a loading indicator while data is being fetched.
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    final tp = Provider.of<ThemeProvider>(context);
 
-    // Show a message if no notifications are found.
-    if (_notifications.isEmpty) {
-      return const Center(
-        child: Text(
-          "No notifications yet.",
-          style: TextStyle(fontSize: 18, color: Colors.grey),
+    return Scaffold(
+      backgroundColor: Colors.transparent, // Connected Theme Fix
+      body: RefreshIndicator(
+        color: accentOrange,
+        onRefresh: _fetchNotifications,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator(color: accentOrange))
+            : ListView(
+          padding: const EdgeInsets.all(24.0),
+          physics: const BouncingScrollPhysics(),
+          children: [
+            const SizedBox(height: 10),
+            _buildHeader(tp),
+            const SizedBox(height: 30),
+
+            if (_notifications.isEmpty)
+              _buildEmptyState()
+            else
+              ..._notifications.map((note) => _buildNotificationCard(note, tp)),
+          ],
         ),
-      );
-    }
-
-    // Build the list of notification cards from the fetched data.
-    return RefreshIndicator(
-      onRefresh: _fetchNotifications, // Allow user to pull-to-refresh
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _notifications.length,
-        itemBuilder: (context, index) {
-          final notification = _notifications[index];
-          return Card(
-            elevation: 8,
-            color: Colors.white.withAlpha(230),
-            margin: const EdgeInsets.symmetric(vertical: 8),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Icons.notification_important_rounded, color: Color(0xFFF27F0C), size: 30),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          notification.message,
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF053F5C)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: ElevatedButton.icon(
-                      onPressed: () => _launchURL(notification.url),
-                      icon: const Icon(Icons.open_in_new_rounded, color: Colors.white),
-                      label: const Text('Open', style: TextStyle(fontSize: 14, color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF053F5C),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
       ),
     );
   }
-}
 
+  Widget _buildHeader(ThemeProvider tp) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.notifications_active_outlined, color: accentOrange, size: 20),
+            SizedBox(width: 8),
+            Text(
+                "NOTIFICATIONS",
+                style: TextStyle(color: accentOrange, fontWeight: FontWeight.bold, letterSpacing: 1.5, fontSize: 12)
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Recent Activity",
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: tp.textColor),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNotificationCard(AppNotification note, ThemeProvider tp) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: tp.cardColor,
+        borderRadius: BorderRadius.circular(25),
+        boxShadow: [
+          BoxShadow(
+            color: tp.isDarkMode ? Colors.black26 : primaryDark.withOpacity(0.04),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Container(
+              width: 6,
+              decoration: const BoxDecoration(
+                color: accentOrange,
+                borderRadius: BorderRadius.only(topLeft: Radius.circular(25), bottomLeft: Radius.circular(25)),
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      note.message,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: tp.textColor,
+                          fontSize: 16,
+                          height: 1.3
+                      ),
+                    ),
+                    const SizedBox(height: 15),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                            "MoneyMinder System",
+                            style: TextStyle(color: tp.subTextColor, fontSize: 11, fontWeight: FontWeight.bold)
+                        ),
+                        if (note.url.isNotEmpty)
+                          _buildDetailsButton(note.url, tp),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailsButton(String url, ThemeProvider tp) {
+    return GestureDetector(
+      onTap: () => _launchURL(url),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: tp.isDarkMode ? accentOrange : primaryDark,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Text(
+                "DETAILS",
+                style: TextStyle(color: tp.isDarkMode ? primaryDark : Colors.white, fontSize: 10, fontWeight: FontWeight.w900)
+            ),
+            const SizedBox(width: 4),
+            Icon(Icons.arrow_outward_rounded, color: tp.isDarkMode ? primaryDark : Colors.white, size: 12),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 4. EMPTY STATE HELPER (Fixed: "Method not defined" error)
+  Widget _buildEmptyState() {
+    return Column(
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.15),
+        Icon(Icons.notifications_none_rounded, size: 60, color: Colors.grey.withOpacity(0.3)),
+        const SizedBox(height: 16),
+        const Text(
+            "All caught up!",
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)
+        ),
+      ],
+    );
+  }
+}

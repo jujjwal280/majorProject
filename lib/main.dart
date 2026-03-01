@@ -32,20 +32,21 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // --- Load Theme Preference ---
   final prefs = await SharedPreferences.getInstance();
-  final isDarkMode = prefs.getBool('isDarkMode') ?? false; // Default to false (light mode) if not set
+  final isDarkMode = prefs.getBool('isDarkMode') ?? false;
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-  await NotificationService.initialize();
+  if (!kIsWeb) {
+    FirebaseMessaging.onBackgroundMessage(
+        _firebaseMessagingBackgroundHandler);
+    await NotificationService.initialize();
+  }
 
   runApp(
     MultiProvider(
       providers: [
-        // Pass the loaded initial value to your ThemeProvider
         ChangeNotifierProvider(create: (_) => ThemeProvider(isDarkMode)),
         ChangeNotifierProvider(create: (_) => UserDataProvider()),
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
@@ -56,6 +57,7 @@ void main() async {
   );
 }
 
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -65,20 +67,8 @@ class MyApp extends StatelessWidget {
       builder: (context, themeProvider, child) {
         return MaterialApp(
           title: 'MoneyMinder',
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF053F5C),
-              brightness: Brightness.light,
-            ),
-            useMaterial3: true,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF429EBD),
-              brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-          ),
+          theme: themeProvider.lightTheme,
+          darkTheme: themeProvider.darkTheme,
           themeMode: themeProvider.isDarkMode ? ThemeMode.dark : ThemeMode.light,
           initialRoute: '/',
           routes: {

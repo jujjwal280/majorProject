@@ -2,6 +2,9 @@
     package="com.example.start1">
 
     <!-- Application declaration -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
     <application
         android:label="start1"
         android:name="${applicationName}"

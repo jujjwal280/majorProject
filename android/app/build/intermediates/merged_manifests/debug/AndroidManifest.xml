@@ -56,7 +56,7 @@
 
         <!-- Main Activity -->
         <activity
-            android:name="com.example.start1.MainActivity"
+            android:name="com.example.start1.`.MainActivity`"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:exported="true"
             android:hardwareAccelerated="true"
