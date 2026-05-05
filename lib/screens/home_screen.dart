@@ -14,6 +14,7 @@ import 'drawer/feedback_screen.dart';
 import 'drawer/profile_screen.dart';
 import 'drawer/transactions_screen.dart';
 import 'drawer/usercard_screen.dart';
+import 'package:intl/intl.dart';
 
 // --- Global Design Constants ---
 const Color primaryDark = Color(0xFF053F5C);
@@ -69,6 +70,169 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _fetchUserDetails();
     _fetchPredictedExpense();
     currentMonth = _getCurrentMonth();
+  }
+
+  // Add this inside _HomeScreenState
+  final List<String> _categories = ['Groceries', 'Transportation', 'Entertainment', 'Rent', 'Dining Out', 'Other'];
+
+  void _showAddTransactionModal() {
+    final tp = Provider.of<ThemeProvider>(context, listen: false);
+    final formKey = GlobalKey<FormState>();
+    String? selectedCategory;
+    double? amount;
+    String? description;
+    DateTime selectedDate = DateTime.now();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setModalState) => Container(
+          decoration: BoxDecoration(
+            color: tp.cardColor,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(35),
+              topRight: Radius.circular(35),
+            ),
+          ),
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            left: 24, right: 24, top: 30,
+          ),
+          child: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 50, height: 5,
+                    decoration: BoxDecoration(
+                      color: tp.subTextColor.withOpacity(0.3),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text("New Transaction",
+                      style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: tp.textColor)),
+                  const SizedBox(height: 25),
+
+                  DropdownButtonFormField<String>(
+                    dropdownColor: tp.cardColor,
+                    decoration: _inputDecor(tp, "Select Category", Icons.category_outlined),
+                    items: _categories.map((c) => DropdownMenuItem(
+                      value: c,
+                      child: Text(c, style: TextStyle(color: tp.textColor)),
+                    )).toList(),
+                    onChanged: (v) => selectedCategory = v,
+                    validator: (v) => v == null ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 15),
+
+                  TextFormField(
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: tp.textColor),
+                    decoration: _inputDecor(tp, "Amount (₹)", Icons.currency_rupee_rounded),
+                    onSaved: (v) => amount = double.tryParse(v!.trim()),
+                    validator: (v) => (v == null || v.isEmpty) ? 'Required' : null,
+                  ),
+                  const SizedBox(height: 15),
+
+                  TextFormField(
+                    style: TextStyle(color: tp.textColor),
+                    decoration: _inputDecor(tp, "Description", Icons.description_outlined),
+                    onSaved: (v) => description = v,
+                  ),
+                  const SizedBox(height: 20),
+
+                  GestureDetector(
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2030),
+                        builder: (context, child) => Theme(
+                          data: tp.isDarkMode
+                              ? ThemeData.dark().copyWith(colorScheme: const ColorScheme.dark(primary: accentOrange))
+                              : ThemeData.light().copyWith(colorScheme: const ColorScheme.light(primary: primaryDark)),
+                          child: child!,
+                        ),
+                      );
+                      if (picked != null) setModalState(() => selectedDate = picked);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: tp.isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_month_rounded,
+                              color: tp.isDarkMode ? accentOrange : primaryDark),
+                          const SizedBox(width: 12),
+                          Text(
+                            DateFormat('EEEE, MMM d, yyyy').format(selectedDate),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: tp.textColor),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (formKey.currentState!.validate()) {
+                        formKey.currentState!.save();
+                        final user = FirebaseAuth.instance.currentUser;
+                        if (user == null) return;
+                        await FirebaseFirestore.instance
+                            .collection('users').doc(user.uid)
+                            .collection('transactions')
+                            .add({
+                          'amount': amount,
+                          'category': selectedCategory,
+                          'description': description ?? '',
+                          'date': Timestamp.fromDate(selectedDate),
+                        });
+                        Navigator.pop(context);
+                        _fetchExpenses(); // Refresh dashboard totals
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryDark,
+                      minimumSize: const Size(double.infinity, 60),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    child: const Text("ADD TRANSACTION",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                  ),
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputDecor(ThemeProvider tp, String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: TextStyle(color: tp.subTextColor),
+      prefixIcon: Icon(icon, color: tp.isDarkMode ? accentOrange : primaryDark),
+      filled: true,
+      fillColor: tp.isDarkMode ? Colors.white.withOpacity(0.05) : Colors.grey[50],
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(15), borderSide: BorderSide.none),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(15),
+        borderSide: const BorderSide(color: accentOrange, width: 2),
+      ),
+    );
   }
 
   // --- PRESERVED CORE LOGIC ---
@@ -157,6 +321,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       // though they can also call Provider.of themselves.
       body: _getScreen(_selectedIndex),
       bottomNavigationBar: _buildBottomNav(themeProvider),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+        onPressed: () {
+          HapticFeedback.mediumImpact();
+          _showAddTransactionModal();
+        },
+        backgroundColor: primaryDark,
+        elevation: 10,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
+      )
+          : null, // Hidden on other tabs
     );
   }
 
@@ -782,7 +958,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             value: mapEntry.value,
             // Show percentage string (e.g., "15.5%")
             title: '${percentage.toStringAsFixed(1)}%',
-            radius: isTouched ? 45 : 35, // Increased radius to fit text better
+            radius: isTouched ? 70 : 50, // Increased radius to fit text better
             titleStyle: TextStyle(
               fontSize: isTouched ? 14 : 11,
               fontWeight: FontWeight.bold,

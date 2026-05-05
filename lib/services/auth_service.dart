@@ -6,22 +6,22 @@ class BiometricVault {
 
   static Future<bool> authenticate() async {
     try {
-      // 1. Check if device supports biometrics
       final isAvailable = await _auth.canCheckBiometrics;
       final isDeviceSupported = await _auth.isDeviceSupported();
-
-      if (!isAvailable || !isDeviceSupported) return true; // Fallback for unsupported devices
-
-      // 2. Trigger the Vault Door
+      if (!isAvailable || !isDeviceSupported) return false;
       return await _auth.authenticate(
         localizedReason: 'Verify your identity to unlock the vault',
         options: const AuthenticationOptions(
-          stickyAuth: true, // Keeps auth active if app goes to background briefly
-          biometricOnly: true, // Forces fingerprint/FaceID over PIN
+          stickyAuth: true,
+          biometricOnly: false,
         ),
       );
     } on PlatformException catch (e) {
-      print("Vault Error: $e");
+      assert(() {
+        // ignore: avoid_print
+        print("Vault auth error: $e");
+        return true;
+      }());
       return false;
     }
   }

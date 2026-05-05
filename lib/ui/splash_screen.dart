@@ -65,7 +65,7 @@ class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMix
     await Future.delayed(const Duration(milliseconds: 500));
     _textController.forward();
 
-    Timer(const Duration(seconds: 4), () {
+    Timer(const Duration(milliseconds: 2500), () {
       if (mounted) splashServices.checkAuthentication(context);
     });
   }

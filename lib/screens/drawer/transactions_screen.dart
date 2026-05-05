@@ -389,10 +389,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 10),
-          Row(
+          const Row(
             children: [
-              const Icon(Icons.history_toggle_off_rounded, color: accentOrange, size: 20),
-              const SizedBox(width: 8),
+              Icon(Icons.history_toggle_off_rounded, color: accentOrange, size: 20),
+              SizedBox(width: 8),
               Text("TIMELINE", style: TextStyle(color: accentOrange, fontWeight: FontWeight.bold, letterSpacing: 2, fontSize: 11)),
             ],
           ),
