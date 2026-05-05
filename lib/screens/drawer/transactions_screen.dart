@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:provider/provider.dart'; // Added for Provider
+import 'package:provider/provider.dart';
 import 'package:start1/services/sms_service.dart';
-import '../../providers/theme_provider.dart'; // Ensure this path is correct
+import '../../providers/theme_provider.dart';
 
 // Brand Constants (kept as fallback/base)
 const Color primaryDark = Color(0xFF053F5C);
@@ -424,7 +424,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             children: [
               Icon(Icons.auto_awesome, color: accentOrange, size: 18),
               SizedBox(width: 10),
-              Text("SYNC SMS LEDGER", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
+              Text("SYNC BANK TRANSACTIONS", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, letterSpacing: 1)),
             ],
           ),
         ),
