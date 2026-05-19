@@ -862,7 +862,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       physics: const BouncingScrollPhysics(),
 
       children: [
-        if (widget.username != null)
+        if (widget.username != null) ...[
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -872,7 +872,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Text("WELCOME BACK "+ '${widget.username}!', style: TextStyle(color: accentOrange, fontWeight: FontWeight.bold, letterSpacing: 1.5)),
             ],
           ),
-
+        ],
         const SizedBox(height: 25),
 
         // --- THE DIGITAL WALLET CARD ---

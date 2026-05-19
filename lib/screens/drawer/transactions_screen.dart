@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:start1/services/sms_service.dart';
 import '../../providers/theme_provider.dart';
+import '../../services/auth_service.dart';
 
 // Brand Constants (kept as fallback/base)
 const Color primaryDark = Color(0xFF053F5C);
@@ -53,7 +54,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     } catch (e) {
       _showStatusSnackbar('Error adding record', true);
     }
-  }
+  } 
 
   void _updateTransaction(String docId, Map<String, dynamic> transactionData) async {
     final User? user = FirebaseAuth.instance.currentUser;
@@ -168,7 +169,15 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             ),
                             child: ElevatedButton(
                               onPressed: () async {
-                                final User? user = FirebaseAuth.instance.currentUser;
+                                HapticFeedback.mediumImpact();
+                                final authenticated =
+                                await BiometricVault.authenticate();
+                                if (!authenticated) {
+                                  _showStatusSnackbar("Authentication Required", true);
+                                  return;
+                                }
+                                final User? user =
+                                    FirebaseAuth.instance.currentUser;
                                 if (user != null) {
                                   await FirebaseFirestore.instance
                                       .collection('users')
@@ -177,7 +186,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                       .doc(docId)
                                       .delete();
                                   Navigator.pop(context);
-                                  _showStatusSnackbar("Transaction Deleted", false);
+                                  HapticFeedback.heavyImpact();
+                                  _showStatusSnackbar(
+                                    "Transaction Deleted",
+                                    false,
+                                  );
                                   widget.onTransactionChanged?.call();
                                 }
                               },

@@ -25,10 +25,9 @@ dependencies:
   url_launcher: ^6.1.10
   firebase_messaging:
   flutter_local_notifications:
-  http:
   provider:
   local_auth:
-
+  http: ^1.2.0
   # --- THE FIX ---
   # Removed the old 'telephony' package
   # Added the new, modern packages for SMS and permissions
