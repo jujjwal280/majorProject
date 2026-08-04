@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _fetchExpenses();
-    _fetchUserDetails();
+    _listenUserDetails();
     _fetchPredictedExpense();
     currentMonth = _getCurrentMonth();
   }
@@ -236,22 +236,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   // --- PRESERVED CORE LOGIC ---
-  void _fetchUserDetails() async {
+  void _listenUserDetails() {
     final User? user = FirebaseAuth.instance.currentUser;
+
     if (user != null) {
-      try {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .snapshots()
+          .listen((userDoc) {
+
         if (userDoc.exists) {
+          final data = userDoc.data()!;
+
           setState(() {
-            _username = userDoc['username'] ?? 'User Name';
-            _accountNumber = userDoc['account_number'] ?? 'XXXX XXXX XXXX';
-            _bankName = userDoc['bank_name'] ?? 'Bank Name';
-            isAdmin = userDoc['isAdmin'] ?? false;
+            _username = data['username'] ?? 'User Name';
+            _accountNumber = data['account_number'] ?? 'XXXX XXXX XXXX';
+            _bankName = data['bank_name'] ?? 'Bank Name';
+            isAdmin = data['isAdmin'] ?? false;
           });
         }
-      } catch (e) {
-        if (kDebugMode) print("User fetch error: $e");
-      }
+
+      });
     }
   }
 
