@@ -55,6 +55,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
   double monthExpenses = 0;
   double predictedExpense = 0;
+  double predictedPercentChange = 0;
+  int predictedConfidence = 0;
+  String predictionReasonText = '';
+  bool hasPrediction = false;
   String currentMonth = "";
   Map<String, double> categoryExpenses = {};
   String? _username;
@@ -303,7 +307,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         final snapshot = await FirebaseFirestore.instance
             .collection('users').doc(user.uid).collection('prediction').doc('next_month').get();
         if (snapshot.exists) {
-          setState(() => predictedExpense = (snapshot.data()?['predicted_expense'] ?? 0.0).toDouble());
+          final data = snapshot.data() ?? {};
+          setState(() {
+            predictedExpense = (data['predicted_expense'] ?? 0.0).toDouble();
+            predictedPercentChange = (data['percent_change'] ?? 0.0).toDouble();
+            predictedConfidence = (data['confidence'] ?? 0) is int
+                ? data['confidence'] ?? 0
+                : (data['confidence'] as num?)?.round() ?? 0;
+            predictionReasonText = data['reason_text'] ?? '';
+            hasPrediction = data['has_sufficient_data'] ?? false;
+          });
         }
       } catch (e) {
         if (kDebugMode) print('Prediction fetch error: $e');
@@ -813,6 +826,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           categoryExpenses: categoryExpenses,
           flipCardKey: _flipCardKey,
           currentMonth: currentMonth,
+          predictedExpense: predictedExpense,
+          predictedPercentChange: predictedPercentChange,
+          predictedConfidence: predictedConfidence,
+          predictionReasonText: predictionReasonText,
+          hasPrediction: hasPrediction,
+          onViewForecast: () => setState(() => _selectedIndex = 1),
         );
       case 1:
       // Index 1: The AI Future Insight Screen we refined earlier
@@ -840,6 +859,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           categoryExpenses: categoryExpenses,
           flipCardKey: _flipCardKey,
           currentMonth: currentMonth,
+          predictedExpense: predictedExpense,
+          predictedPercentChange: predictedPercentChange,
+          predictedConfidence: predictedConfidence,
+          predictionReasonText: predictionReasonText,
+          hasPrediction: hasPrediction,
+          onViewForecast: () => setState(() => _selectedIndex = 1),
         );
     }
   }
@@ -851,8 +876,27 @@ class DashboardScreen extends StatefulWidget {
   final Map<String, double> categoryExpenses;
   final GlobalKey<FlipCardState> flipCardKey;
   final String currentMonth;
+  final double predictedExpense;
+  final double predictedPercentChange;
+  final int predictedConfidence;
+  final String predictionReasonText;
+  final bool hasPrediction;
+  final VoidCallback? onViewForecast;
 
-  const DashboardScreen({super.key, this.username, required this.monthExpenses, required this.categoryExpenses, required this.flipCardKey, required this.currentMonth});
+  const DashboardScreen({
+    super.key,
+    this.username,
+    required this.monthExpenses,
+    required this.categoryExpenses,
+    required this.flipCardKey,
+    required this.currentMonth,
+    this.predictedExpense = 0,
+    this.predictedPercentChange = 0,
+    this.predictedConfidence = 0,
+    this.predictionReasonText = '',
+    this.hasPrediction = false,
+    this.onViewForecast,
+  });
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -909,6 +953,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
+
+        const SizedBox(height: 20),
+
+        // --- PREDICTED NEXT MONTH CARD ---
+        _buildForecastCard(),
+
+        if (widget.hasPrediction && widget.predictionReasonText.isNotEmpty) ...[
+          const SizedBox(height: 15),
+          _buildSmartInsightStrip(),
+        ],
 
         const SizedBox(height: 30),
 
@@ -994,6 +1048,95 @@ class _DashboardScreenState extends State<DashboardScreen> {
             Text(e.key, style: const TextStyle(color: Colors.white, fontSize: 13)),
           ],
         )).toList(),
+      ),
+    );
+  }
+
+  Widget _buildForecastCard() {
+    final isIncrease = widget.predictedPercentChange >= 0;
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: widget.onViewForecast,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: primaryDark.withOpacity(0.08)),
+          boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 3))],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(color: primaryDark.withOpacity(0.08), shape: BoxShape.circle),
+              child: const Icon(Icons.insights_rounded, color: primaryDark),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Predicted Next Month",
+                      style: TextStyle(fontSize: 12, color: Colors.black54, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  widget.hasPrediction
+                      ? Text("₹ ${widget.predictedExpense.toStringAsFixed(0)}",
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: primaryDark))
+                      : const Text("Add more history to unlock this",
+                      style: TextStyle(fontSize: 13, color: Colors.black45, fontStyle: FontStyle.italic)),
+                ],
+              ),
+            ),
+            if (widget.hasPrediction)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: (isIncrease ? Colors.redAccent : Colors.green).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(isIncrease ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                        size: 14, color: isIncrease ? Colors.redAccent : Colors.green),
+                    const SizedBox(width: 2),
+                    Text("${widget.predictedPercentChange.abs().toStringAsFixed(1)}%",
+                        style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isIncrease ? Colors.redAccent : Colors.green)),
+                  ],
+                ),
+              ),
+            const SizedBox(width: 4),
+            const Icon(Icons.chevron_right_rounded, color: Colors.black26),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmartInsightStrip() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: accentOrange.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.lightbulb_outline_rounded, color: accentOrange, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              widget.predictionReasonText,
+              style: const TextStyle(fontSize: 12.5, color: primaryDark, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
       ),
     );
   }
